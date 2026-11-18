@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>UNSENSORY RESEARCH LAB · ใบตรวจ</title>
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="record.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--desk);color:var(--ink);font:16px/1.55 var(--f);-webkit-font-smoothing:antialiased}
+main{max-width:440px;margin:0 auto;padding:18px 14px 40px;display:flex;flex-direction:column;align-items:center}
+.paper{width:100%;background:var(--paper);border-radius:6px;box-shadow:0 24px 40px -24px #000}
+.msg{color:#C7C9CC;text-align:center;font-size:14px;margin:16px 6px 0;max-width:360px}
+.msg b{display:block;color:#fff;font:700 18px var(--h);margin-bottom:4px}
+.btn{margin-top:16px;background:#F4F4F2;color:#121212;border:0;border-radius:2px;padding:12px 22px;font:700 15px var(--h);cursor:pointer}
+.btn[disabled]{opacity:.5}
+#shot img{max-width:300px;margin-top:14px;border-radius:12px}#shot p{color:#ddd;font-size:13px;text-align:center}
+.lanyard .strap{height:40px}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs button{background:#232426;color:#A9ACB0;border:0;padding:8px 16px;border-radius:2px;font:500 14px var(--h)}
+.tabs button.on{background:#F4F4F2;color:#121212}
+</style>
+</head>
+<body>
+<main id="app"><p class="msg">กำลังเปิดใบตรวจ…</p></main>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="report_view.js"></script>
+<script>
+/* ใบตรวจสาธารณะ: เปิดจาก QR บนบัตร · ?t=<token>
+   อ่านจาก Supabase ผ่านฟังก์ชัน public_report (คีย์สาธารณะ อ่านได้แค่ใบของ token นี้)
+   ถ้าเปิดจากเครื่อง PC ในงาน และเน็ตหลุด → อ่านจากเครื่อง PC แทน */
+const SB={url:"https://rocvqdplaesxmyncjcfz.supabase.co",key:"sb_publishable_5Nf1pNSNGkyp-7cOnUEzsQ_-F1f8xKC"};
+const T=new URLSearchParams(location.search).get("t")||"";
+const $=s=>document.querySelector(s);let view=null,D=null;
+async function fromCloud(){const r=await fetch(`${SB.url}/rest/v1/rpc/public_report`,{method:"POST",
+  headers:{apikey:SB.key,Authorization:`Bearer ${SB.key}`,"Content-Type":"application/json","Content-Profile":"unsensory"},body:JSON.stringify({p_token:T})});
+  if(!r.ok)throw new Error(r.status);const d=await r.json();if(!d)return null;return {...d.report,status:d.status||d.report.status}}
+async function fromBooth(){const r=await fetch(`/api/report?t=${encodeURIComponent(T)}`,{cache:"no-store"});if(!r.ok)return null;return (await r.json()).report}
+async function load(){if(T.length<20)return null;
+  try{const d=await fromCloud();if(d)return d}catch(e){}
+  try{return await fromBooth()}catch(e){return null}}
+function render(){const app=$("#app");
+  if(!D){app.innerHTML=`<p class="msg"><b>ไม่พบใบตรวจ</b>ลิงก์อาจพิมพ์ไม่ครบ หรือหมดอายุแล้ว (เก็บไว้ 30 วัน) · ถ้ายังอยู่ในงาน ถามทีมที่บูธได้เลย</p>`;return}
+  const done=D.status==="done";if(!view)view=done?"record":"card";
+  const tabs=done?`<div class="tabs"><button data-v="record" class="${view==="record"?"on":""}">ใบตรวจ</button><button data-v="card" class="${view==="card"?"on":""}">บัตร</button></div>`:"";
+  const body=view==="record"?`<div class="paper">${RV.record(D,{url:location.href})}</div>`:RV.card(D);
+  const msg=done?"":D.status==="running"?`<p class="msg"><b>กำลังเก็บลายพิมพ์</b>ใบตรวจจะขึ้นที่ลิงก์นี้เองหลังจบรอบ ไม่ต้องสแกนใหม่</p>`
+    :`<p class="msg"><b>บัตรพร้อมแล้ว</b>นอนเสร็จแล้วเปิดลิงก์นี้อีกครั้ง บัตรจะกลายเป็นใบตรวจ</p>`;
+  app.innerHTML=tabs+body+msg+`<button class="btn" id="save">บันทึก${view==="record"?"ใบตรวจ":"บัตร"}เป็นรูป</button><div id="shot"></div>`;
+  document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
+  $("#save").onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="กำลังสร้างรูป…";
+    try{await document.fonts.ready;const el=view==="record"?$(".paper"):$(".lanyard");const c=await html2canvas(el,{backgroundColor:view==="record"?"#F4F4F2":null,scale:3});
+      $("#shot").innerHTML=`<img alt="" src="${c.toDataURL("image/png")}"><p>กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ"</p>`;b.textContent="สร้างรูปแล้ว"}
+    catch(err){b.disabled=false;b.textContent="ลองอีกครั้ง"}}}
+(async()=>{D=await load();render();
+  if(D&&D.status!=="done")setInterval(async()=>{if(document.hidden)return;const d=await load();if(d&&d.status!==D.status){D=d;view=null;render()}},20000)})();
+</script>
+</body>
+</html>

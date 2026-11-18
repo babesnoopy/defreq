@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DE-FREQ · แฟ้มคัดกรอง</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DE-FREQ">
+<meta name="theme-color" content="#2B2C2E">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="record.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--desk);color:var(--ink);font:16px/1.55 var(--f);-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}button{cursor:pointer}
+:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+/* ── แฟ้ม: แท็บบนสำหรับโหมด · แท็บข้างสำหรับเตียง ── */
+.desk{padding:18px 64px 22px 22px;min-height:100vh;display:flex;flex-direction:column}
+.toptabs{display:flex;gap:4px;margin-left:30px}
+.toptabs .conn{margin-left:auto;align-self:center;font:12px var(--m);color:#A9ACB0;padding-right:8px}
+.toptabs button{background:var(--folder2);color:#A9ACB0;border:0;border-radius:10px 10px 0 0;padding:8px 22px 6px;font:500 14px var(--h)}
+.toptabs button.on{background:var(--folder);color:#fff}
+.folder{position:relative;flex:1;background:var(--folder);border-radius:4px 16px 16px 16px;padding:22px 26px 26px 22px;display:flex}
+.sidetabs{position:absolute;right:-44px;top:40px;display:flex;flex-direction:column;gap:6px}
+.sidetabs button{writing-mode:vertical-rl;background:var(--tab);border:0;border-radius:0 10px 10px 0;padding:16px 8px;font:500 14px var(--h);color:var(--ink);box-shadow:inset 3px 0 0 rgba(0,0,0,.12);display:flex;align-items:center;gap:8px}
+.sidetabs button.on{background:var(--paper);box-shadow:none;transform:translateX(-4px)}
+.sidetabs .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid #8A8D91;background:transparent}
+.dot.ok{background:var(--ink);border-color:var(--ink)}.dot.warn{background:linear-gradient(90deg,var(--ink) 50%,transparent 50%);border-color:var(--ink)}.dot.stop{background:transparent;border:0;border-radius:0;width:12px;height:12px;background:linear-gradient(45deg,transparent 42%,var(--ink) 42%,var(--ink) 58%,transparent 58%),linear-gradient(-45deg,transparent 42%,var(--ink) 42%,var(--ink) 58%,transparent 58%)}
+/* ── แผ่นกระดาษ ── */
+.sheet{position:relative;flex:1;background:var(--paper);border-radius:3px;padding:30px 40px 0;display:flex;flex-direction:column;box-shadow:6px 6px 0 var(--paper2),7px 7px 0 var(--rule);max-height:calc(100vh - 92px);overflow:auto}
+.clip{position:absolute;left:18px;top:-14px;width:22px;height:70px;border:3px solid #9AA0A3;border-radius:12px;border-bottom-color:transparent;z-index:2}
+.cross{position:absolute;width:18px;height:18px}
+.cross::before,.cross::after{content:"";position:absolute;background:var(--pencil)}.cross::before{left:8px;top:0;width:1px;height:18px}.cross::after{top:8px;left:0;height:1px;width:18px}
+.cross.tr{right:14px;top:14px}.cross.br{right:14px;bottom:14px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px}
+.title{font:700 46px/1.02 var(--h);margin:6px 0 2px;letter-spacing:-.01em}
+.title .hand{font:400 40px var(--hand);color:var(--pen);margin-left:10px}
+.sub{font:13px var(--m);color:var(--pencil);border-bottom:1.5px solid var(--ink);padding-bottom:10px}
+.regno{font:12px/1.6 var(--m);text-align:right;color:var(--pencil);white-space:nowrap}
+/* ── หัวข้อ 01–05 แบบเช็กลิสต์ในแฟ้ม ── */
+.sec{border-bottom:1px solid var(--rule)}
+.row{display:grid;grid-template-columns:22px 64px 1fr auto;align-items:center;gap:10px;width:100%;background:none;border:0;padding:12px 0;text-align:left}
+.row .pin{width:8px;height:8px;background:var(--ink);justify-self:center}
+.row .no{font:44px/1 var(--disp);position:relative}
+.row .lbl b{display:inline-block;font:700 19px var(--h)}.row .lbl small{display:block}
+.row .lbl small{font:13px var(--f);color:var(--pencil)}
+.box{width:30px;height:30px;border:1.5px solid var(--ink);display:grid;place-items:center;font:28px/1 var(--hand);color:var(--pen)}
+.sec.cur .no,.sec.cur .lbl b{background:var(--ink);color:var(--paper);padding:0 8px;margin-left:-8px}
+.sec.lock .row{opacity:.42}
+.body{padding:2px 0 22px 96px}
+/* ── คำตอบ: ลายมือปากกาน้ำเงิน ── */
+.q{display:grid;grid-template-columns:230px 1fr;gap:6px 18px;padding:10px 0;border-top:1px dashed var(--fine)}
+.q:first-child{border-top:0}
+.q>label{font-weight:500;padding-top:6px}.q>label small{display:block;font-weight:400;font-size:13px;color:var(--pencil)}
+.line{border:0;border-bottom:1.5px solid var(--ink);background:transparent;font:28px var(--hand);color:var(--pen);padding:0 4px;width:260px}
+.opts{display:flex;flex-wrap:wrap;gap:6px 16px}
+.opt{display:flex;align-items:center;gap:8px;background:none;border:0;padding:6px 2px;font-size:15px}
+.opt i{width:22px;height:22px;border:1.5px solid var(--ink);display:grid;place-items:center;font:22px/1 var(--hand);font-style:normal;color:var(--pen)}
+.opt.on span{font-family:var(--hand);color:var(--pen);font-size:18px}
+.scale{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--pencil)}
+.scale button{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--ink);background:transparent;font:500 16px var(--m)}
+.scale button.on{background:transparent;color:var(--pen);border:2.5px solid var(--pen);font:400 22px var(--hand)}
+.yn{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:9px 0;border-top:1px dashed var(--fine)}
+.yn:first-child{border-top:0}.yn small{display:block;color:var(--pencil);font-size:13px}
+.seg{display:flex;gap:14px}
+.consent{display:flex;gap:12px;align-items:flex-start;padding:8px 0;background:none;border:0;text-align:left;width:100%}
+.nav{display:flex;justify-content:flex-end;gap:10px;padding-top:12px}
+.btn{padding:11px 22px;border:1.5px solid var(--ink);background:transparent;font:600 15px var(--h);border-radius:2px}
+.btn.pri{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+/* ── ตรายาง ── */
+.fit{display:grid;grid-template-columns:100px 1fr 50px;gap:6px 12px;align-items:center;font:14px var(--m);max-width:520px}
+.fit i{height:12px;border:1px solid var(--ink);display:block}.fit i b{display:block;height:100%}
+.notes{margin:8px 0 0;padding-left:18px;font-family:var(--hand);color:var(--pen);font-size:18px}
+.foot{margin-top:auto;display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1.5px solid var(--ink);padding:10px 0 16px;font:11px/1.5 var(--m);color:var(--pencil)}
+.foot b{display:block;color:var(--ink);font-weight:500;font-size:12px}
+.empty{padding:70px 0;text-align:center}
+.empty .hand{font:30px var(--hand);color:var(--pen)}
+/* ── ใบสรุปรอบ ── */
+.bedline{display:grid;grid-template-columns:64px 1fr 200px 160px;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--rule)}
+.bedline .no{font:44px/1 var(--disp)}
+.bedline .nm{font:28px var(--hand);color:var(--pen)}
+.verdictbig{display:flex;align-items:center;gap:26px;margin:22px 0 6px}
+.verdictbig .set{font:72px/1 var(--disp);letter-spacing:.01em}
+/* ── บัตร / รายงาน ── */
+.overlay{position:fixed;inset:0;background:rgba(10,12,11,.82);display:grid;place-items:center;z-index:9;padding:20px;overflow:auto}
+.keep{display:flex;gap:16px;align-items:center;margin-top:18px;background:var(--paper);padding:12px 16px;border-radius:10px;max-width:420px}
+.keep b{display:block;font:700 15px var(--h)}.keep span{display:block;font-size:13px;color:var(--pencil);margin-bottom:8px}
+#shot img{max-width:300px;margin-top:14px;border-radius:12px}#shot p{color:#ddd;font-size:13px;text-align:center}
+.close{margin-top:16px;color:#ddd;background:none;border:1px solid #666;padding:8px 18px;border-radius:2px}
+@media (max-width:900px){.desk{padding:10px 50px 10px 8px}.body{padding-left:0}.q{grid-template-columns:1fr}.title{font-size:34px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="desk">
+  <div class="toptabs" id="modes"></div>
+  <div class="folder"><div class="sidetabs" id="tabs"></div><div class="sheet" id="sheet"></div></div>
+</div>
+<div id="ov"></div>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="report_view.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const SETS={baseline:{name:"BASELINE",th:"ตั้งศูนย์",color:"var(--baseline)",hex:"#0FA3BF"},boost:{name:"BOOST",th:"ปลุกพลัง",color:"var(--boost)",hex:"#E8265E"},relax:{name:"RELAX",th:"ปล่อยวาง",color:"var(--relax)",hex:"#2DB3A8"}};
+const STEPS=["ข้อมูลและความยินยอม","ความปลอดภัย","เช็กอินร่างกาย","ช่วงนี้เป็นยังไง","ผลคัดกรอง"];
+// คำถามความปลอดภัย: stop = ร่วมไม่ได้ · warn = ร่วมได้แต่ปรับ
+const SAFETY=[
+ {k:"seizure",t:"เคยมีอาการชัก หรือไวต่อแสงกะพริบ",s:"รวมถึงโรคลมชักที่คุมได้แล้ว",lvl:"stop",note:"ร่วมนอนในห้องไม่ได้ (มีแสงกะพริบ) · ชวนดูจากด้านนอก"},
+ {k:"implant",t:"มีเครื่องกระตุ้นหัวใจ หรืออุปกรณ์ฝังในร่างกาย",s:"เช่น pacemaker, ประสาทหูเทียม",lvl:"stop",note:"ห้ามติดขั้วไฟฟ้า · ชวนดูจากด้านนอก"},
+ {k:"migraine",t:"เป็นไมเกรน เวียนหัวง่าย หรือเมารถง่าย",lvl:"warn",note:"ลดแสงกะพริบ · ไม่แนะนำ BOOST"},
+ {k:"pregnant",t:"ตั้งครรภ์อยู่",lvl:"warn",note:"ลดเสียงเบสสั่น · ไม่แนะนำ BOOST"},
+ {k:"skin",t:"ผิวแพ้ง่าย หรือแพ้เทปกาว",lvl:"warn",note:"ใช้แค่เซนเซอร์หัวใจที่นิ้ว ไม่แปะขั้วที่หน้าผาก"},
+ {k:"space",t:"กลัวที่แคบ หรือกลัวความมืด",lvl:"warn",note:"ให้นอนเตียงริม · เปิดไฟสลัวไว้"},
+ {k:"alcohol",t:"ดื่มแอลกอฮอล์ภายใน 6 ชั่วโมงนี้",lvl:"warn",note:"ค่าสมองอาจเพี้ยน · ระบุในรายงาน"},
+ {k:"sound",t:"ไวต่อเสียงดัง",lvl:"warn",note:"ลดเสียงลง 20%"}];
+const MOOD=["งานถาโถม","นอนไม่พอ","ตื่นเต้นกับบางอย่าง","ใจลอย","เบื่อๆ","อยากหนีไปทะเล","กำลังดี","คิดเยอะ"];
+const WEATHER=[["sun","แดดจ้า"],["cloud","เมฆครึ้ม"],["drizzle","ฝนพรำ"],["storm","พายุ"],["fog","หมอกลง"]];
+const WANT=[["rest","ได้พัก"],["energy","ได้พลัง"],["self","ได้อยู่กับตัวเอง"]];
+const blank=()=>({step:0,nick:"",age:"",consent:{sensor:false,data:false,photo:false},safety:{},energy:0,stress:0,busy:0,sleepy:0,sleep:"",caffeine:"",mood:[],weather:"",want:"",post:{energy:0,stress:0,busy:0,word:""}});
+const R={id:"R-"+new Date().toISOString().slice(5,10).replace("-","")+"-07",beds:[blank(),blank(),blank()],cur:0,view:"intake",confirmed:null};
+// ตัวอย่างข้อมูล 2 เตียง ให้เห็นภาพรวม
+Object.assign(R.beds[1],{step:4,nick:"มุก",age:"25-34",consent:{sensor:true,data:true,photo:false},safety:{seizure:false,implant:false,migraine:true,pregnant:false,skin:false,space:false,alcohol:false,sound:false},energy:2,stress:4,busy:5,sleepy:3,sleep:"5-6",caffeine:"2",mood:["งานถาโถม","คิดเยอะ"],weather:"storm",want:"rest"});
+Object.assign(R.beds[2],{step:4,nick:"ต้น",age:"18-24",consent:{sensor:true,data:true,photo:true},safety:{seizure:false,implant:false,migraine:false,pregnant:false,skin:false,space:false,alcohol:false,sound:false},energy:2,stress:2,busy:3,sleepy:4,sleep:"7-8",caffeine:"0",mood:["เบื่อๆ","ใจลอย"],weather:"cloud",want:"energy"});
+
+/* ── คำนวณ ── */
+function triage(p){if(p._tri&&!Object.keys(p.safety).length)return {lvl:p._tri,notes:p._notes||[]};const on=SAFETY.filter(q=>p.safety[q.k]);if(on.some(q=>q.lvl==="stop"))return {lvl:"stop",notes:on.map(q=>q.note)};
+  if(SAFETY.some(q=>p.safety[q.k]===undefined))return {lvl:null,notes:[]};return {lvl:on.length?"warn":"ok",notes:on.map(q=>q.note)}}
+function fit(p){ // คะแนนความเหมาะของแต่ละเซ็ต (0–100) จากเช็กอิน + คำตอบชวนคุย
+  if(p._fit&&!p.sleep)return p._fit;
+  if(!p.energy||!p.stress)return null;
+  const s={baseline:2,boost:0,relax:0},mood=m=>p.mood.includes(m)?1:0;
+  s.relax+=p.stress*1.0+p.busy*.7+(p.sleep==="≤4"||p.sleep==="5-6"?1:0)+({storm:1.6,drizzle:1}[p.weather]||0)+(p.want==="rest"?2.2:0)+.7*(mood("งานถาโถม")+mood("นอนไม่พอ")+mood("คิดเยอะ"));
+  s.boost+=(5-p.energy)*.9+(p.stress<=3?p.sleepy*.5:0)+({cloud:1,fog:1.2}[p.weather]||0)+(p.want==="energy"?2.2:0)+.7*(mood("เบื่อๆ")+mood("ใจลอย"))-p.stress*.3;
+  s.baseline+=(p.want==="self"?2.2:0)+(p.weather==="sun"?1:0)+.7*(mood("กำลังดี")+mood("ตื่นเต้นกับบางอย่าง"))+(Math.abs(p.energy-3)<=1&&p.stress<=3?1.4:0);
+  const e=Object.fromEntries(Object.entries(s).map(([k,v])=>[k,Math.exp(Math.max(0,v)*.3)])),t=e.baseline+e.boost+e.relax;
+  return Object.fromEntries(Object.entries(e).map(([k,v])=>[k,Math.round(v/t*100)]))}
+function roundPick(){
+  const ppl=R.beds.map(p=>({p,tr:triage(p),f:fit(p)})).filter(x=>x.tr.lvl&&x.tr.lvl!=="stop"&&x.f);
+  if(!ppl.length)return null;
+  const sum={baseline:0,boost:0,relax:0};ppl.forEach(x=>{for(const k in sum)sum[k]+=x.f[k]});
+  const n=ppl.length;for(const k in sum)sum[k]=Math.round(sum[k]/n);
+  const has=t=>ppl.some(x=>x.tr.notes.some(n=>n.includes(t))),noBoost=has("ไม่แนะนำ BOOST");
+  const order=Object.keys(sum).sort((a,b)=>sum[b]-sum[a]);let pick=order[0],why="";
+  if(pick==="boost"&&noBoost){pick=order[1];why=`BOOST ได้คะแนนสูงสุด แต่มีคนที่ไม่ควรเจอแสงจัด เลยใช้ ${SETS[pick].name} แทน`}
+  else{const top=ppl.filter(x=>Object.keys(x.f).sort((a,b)=>x.f[b]-x.f[a])[0]===pick).map(x=>x.p.nick||"ไม่มีชื่อ");why=`${top.join(", ")||"กลุ่ม"} ต้องการ${SETS[pick].th}มากที่สุด · เฉลี่ยจาก ${n} คน`}
+  const flags=[];if(has("ลดแสงกะพริบ"))flags.push("ลดแสงกะพริบทั้งรอบ");if(has("ลดเสียงเบสสั่น"))flags.push("ลดเสียงเบสสั่น");if(has("ลดเสียงลง 20%"))flags.push("ลดเสียงลง 20%");
+  return {sum,pick,why,flags,noBoost}}
+
+function trace(seed,n,base,amp){let x=base,o=[];for(let i=0;i<n;i++){x+=(Math.sin(i*.37+seed)*.5+Math.sin(i*.11+seed*2)*.8)*amp*.12;x=x*.97+base*.03;o.push(x)}return o}
+function qrFake(){let s="";const fin=(x,y)=>`<rect x="${x}" y="${y}" width="7" height="7" fill="#121212"/><rect x="${x+1}" y="${y+1}" width="5" height="5" fill="#fff"/><rect x="${x+2}" y="${y+2}" width="3" height="3" fill="#121212"/>`;
+  s+=fin(0,0)+fin(14,0)+fin(0,14);for(let y=0;y<21;y++)for(let x=0;x<21;x++){if((x<8&&y<8)||(x>12&&y<8)||(x<8&&y>12))continue;if(((x*7+y*13+x*y)%5)<2)s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="#121212"/>`}return s}
+
+for(const k in SETS){SETS[k].color="var(--ink)";SETS[k].hex="var(--ink)"}
+R.tab=2;R.view="intake";R.beds[1].max=4;R.beds[2].max=4;R.beds[0]._start=false;
+const TH_DATE=()=>new Date().toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit",year:"numeric"});
+const SECS=[["ข้อมูลและความยินยอม","ใครมา และยินยอมอะไรบ้าง"],["ความปลอดภัย","มีอะไรที่ต้องระวังไหม"],["เช็กอินร่างกาย","ตอนนี้ร่างกายเป็นยังไง"],["ช่วงนี้เป็นยังไง","อาการสำคัญที่มาในวันนี้"],["ผลคัดกรอง","ผ่านไหม และเหมาะกับเซ็ตไหน"]];
+const hn=i=>R.beds[i].hn||(LIVE?"—":"UNS-0"+(426+i));
+let LIVE=false;
+function canNext(p){return [p.nick&&p.age&&p.age!=="<18"&&p.consent.sensor&&p.consent.data,SAFETY.every(q=>p.safety[q.k]!==undefined),p.energy&&p.stress&&p.busy&&p.sleepy&&p.sleep&&p.caffeine,p.weather&&p.want,true][p.step]}
+const opts=(name,list,val,multi)=>`<div class="opts">${list.map(x=>{const[k,l]=Array.isArray(x)?x:[x,x];const on=multi?val.includes(k):val===k;return `<button class="opt ${on?"on":""}" data-ch="${name}" data-k="${k}"><i>${on?"✓":""}</i><span>${l}</span></button>`}).join("")}</div>`;
+const scale=(name,lo,hi,val)=>`<div class="scale"><span>${lo}</span>${[1,2,3,4,5].map(n=>`<button class="${val===n?"on":""}" data-sc="${name}" data-n="${n}" aria-label="${n}">${n}</button>`).join("")}<span>${hi}</span></div>`;
+function secBody(p,i){
+  if(i===0)return `<div class="q"><label for="nick">ชื่อเล่น</label><input class="line" id="nick" value="${p.nick}" autocomplete="off" placeholder="…"></div>
+    <div class="q"><label>ช่วงอายุ</label><div>${opts("age",[["<18","ต่ำกว่า 18"],"18-24","25-34","35-44","45+"],p.age)}${p.age==="<18"?`<div class="notes">ต้องมีผู้ปกครองเซ็นยินยอมที่บูธก่อน</div>`:""}</div></div>
+    <div class="q"><label>ความยินยอม<small>ให้ผู้ร่วมติ๊กเอง</small></label><div>
+      ${[["sensor","<b>ติดเซนเซอร์</b> ขั้วที่หน้าผากและเซนเซอร์ที่นิ้ว ถอดออกได้ทุกเมื่อ · จำเป็น"],["data","<b>เก็บข้อมูลเพื่อทำรายงาน</b> เก็บ 30 วัน ไม่ขาย ไม่แชร์ ขอลบได้ · จำเป็น"],["photo","ถ่ายรูปบรรยากาศได้ · ไม่บังคับ"]].map(([k,t])=>`<button class="consent opt ${p.consent[k]?"on":""}" data-cs="${k}"><i>${p.consent[k]?"✓":""}</i><span style="font-family:var(--f);font-size:15px;color:var(--ink)">${t}</span></button>`).join("")}</div></div>`;
+  if(i===1)return `<p class="kicker" style="margin:0 0 6px">ถามทีละข้อ ไม่แน่ใจให้ตอบ "ใช่" ไว้ก่อน · คำตอบหมวดนี้ไม่ถูกเก็บ เก็บแค่ผลคัดกรอง</p>${SAFETY.map(q=>`<div class="yn"><span>${q.t}${q.s?`<small>${q.s}</small>`:""}</span><span class="seg">
+     <button class="opt ${p.safety[q.k]===false?"on":""}" data-sf="${q.k}" data-v="0"><i>${p.safety[q.k]===false?"✓":""}</i><span>ไม่ใช่</span></button>
+     <button class="opt ${p.safety[q.k]===true?"on":""}" data-sf="${q.k}" data-v="1" style="${p.safety[q.k]===true?`--pen:${q.lvl==="stop"?"var(--stop)":"var(--warn)"}`:""}"><i>${p.safety[q.k]===true?"✓":""}</i><span>ใช่</span></button></span></div>`).join("")}`;
+  if(i===2)return `<div class="q"><label>พลังงานตอนนี้</label>${scale("energy","หมดแรง","เต็มถัง",p.energy)}</div>
+    <div class="q"><label>ความเครียด</label>${scale("stress","สบายๆ","ตึงมาก",p.stress)}</div>
+    <div class="q"><label>ในหัวมีเรื่องวนแค่ไหน</label>${scale("busy","โล่ง","วนไม่หยุด",p.busy)}</div>
+    <div class="q"><label>ง่วงแค่ไหน</label>${scale("sleepy","ตาสว่าง","จะหลับ",p.sleepy)}</div>
+    <div class="q"><label>เมื่อคืนนอนกี่ชั่วโมง</label>${opts("sleep",["≤4","5-6","7-8","9+"],p.sleep)}</div>
+    <div class="q"><label>กาแฟหรือชาวันนี้</label>${opts("caffeine",[["0","ไม่ได้ดื่ม"],["1","1 แก้ว"],["2","2 แก้ว"],["3+","3 แก้วขึ้นไป"]],p.caffeine)}</div>`;
+  if(i===3)return `<div class="q"><label>ช่วงนี้ชีวิตเป็นยังไง<small>เลือกได้หลายข้อ</small></label>${opts("mood",MOOD,p.mood,true)}</div>
+    <div class="q"><label>ถ้าใจตอนนี้เป็นสภาพอากาศ</label>${opts("weather",WEATHER,p.weather)}</div>
+    <div class="q"><label>อยากได้อะไรจาก 5 นาทีนี้</label>${opts("want",WANT,p.want)}</div>`;
+  const tr=triage(p),f=fit(p);const lab={ok:"ผ่าน",warn:"ผ่าน · มีเงื่อนไข",stop:"ร่วมไม่ได้"}[tr.lvl]||"ยังไม่ครบ";
+  return `<div style="display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap"><div class="stamp ${tr.lvl}">${lab}</div>
+   <div style="flex:1;min-width:280px">${tr.notes.length?`<b>สิ่งที่ต้องปรับ</b><ul class="notes">${tr.notes.map(n=>`<li>${n}</li>`).join("")}</ul>`:`<b>ไม่มีข้อห้าม</b> ร่วมได้ตามปกติ`}
+   ${f&&tr.lvl!=="stop"?`<div style="margin-top:14px"><b>เหมาะกับเซ็ตไหน</b><div class="fit" style="margin-top:6px">${Object.keys(SETS).map(k=>`<span>${SETS[k].name}</span><i><b style="width:${f[k]}%;background:${SETS[k].color}"></b></i><span>${f[k]}%</span>`).join("")}</div></div>`:""}</div></div>
+   ${tr.lvl!=="stop"?`<div class="nav" style="justify-content:flex-start;padding-top:18px;align-items:center;gap:14px">${p._err?`<span class="notes">${p._err}</span><button class="btn" id="resend">ส่งอีกครั้ง</button>`:`<button class="btn pri" id="card" ${LIVE&&!p.url?"disabled":""}>${LIVE&&!p.url?"กำลังส่งเข้าเครื่อง PC…":"ออกบัตรผู้รับบริการ"}</button>`}</div>`:""}`}
+function intakeSheet(){const i=R.tab-1,p=R.beds[i],bed=i+1;
+  const head=`<div class="clip"></div><span class="cross tr"></span>
+   <div class="head"><div><div class="lockup">UNSENSORY RESEARCH LAB <span>/ SENSORY DE-FREQ</span></div><div class="kicker" style="margin-top:4px">แฟ้มคัดกรอง / รอบ ${R.id.slice(2)}</div><div class="title">เตียง ${bed}${p.nick?`<span class="hand">${p.nick}</span>`:""}</div></div>
+   <div class="regno">HN ${hn(i)}<br>${R.id}-B${bed}</div></div><div class="sub">สิ่งที่ต้องรู้ก่อนพาขึ้นเตียง · ใช้เวลาประมาณ 2 นาที</div>`;
+  const foot=`<div class="foot"><div>เลขทะเบียน<b>${R.id}-B${bed}</b></div><div>ผู้คัดกรอง<b>Unsensory Team</b></div><div>วันที่<b>${TH_DATE()}</b></div></div>`;
+  if(!p._start&&!p.nick&&!p.step)return head+`<div class="empty"><div class="hand">เตียงนี้ยังว่าง</div><p>เปิดแฟ้มใหม่เมื่อผู้ร่วมมาถึงบูธ</p><button class="btn pri" id="start">เปิดแฟ้มเตียง ${bed}</button></div>`+foot;
+  return head+SECS.map(([t,s],k)=>{const mx=Math.max(p.max||0,p.step),done=k<mx||(k===4&&mx===4&&k!==p.step),cur=k===p.step,lock=k>mx;
+    return `<section class="sec ${cur?"cur":""} ${lock?"lock":""}"><button class="row" data-st="${k}" ${lock?"disabled":""} aria-expanded="${cur}"><span class="pin"></span><span class="no">0${k+1}</span><span class="lbl"><b>/ ${t}</b><small>${s}</small></span><span class="box">${done?"✓":""}</span></button>
+     ${cur?`<div class="body">${secBody(p,k)}${k<4?`<div class="nav"><button class="btn pri" id="next" ${canNext(p)?"":"disabled"}>${k===3?"ดูผลคัดกรอง":"ถัดไป"}</button></div>`:""}</div>`:""}</section>`}).join("")+foot}
+function summarySheet(){const rp=roundPick();
+  return `<div class="clip"></div><span class="cross tr"></span>
+   <div class="head"><div><div class="lockup">UNSENSORY RESEARCH LAB <span>/ SENSORY DE-FREQ</span></div><div class="kicker" style="margin-top:4px">ใบสรุปรอบ</div><div class="title">รอบ ${R.id.slice(2)}</div></div><div class="regno">${R.beds.filter(p=>fit(p)).length} / 3 เตียงคัดกรองแล้ว</div></div>
+   <div class="sub">ระบบรวมความต้องการของทุกคนในรอบ แล้วเลือกเซ็ตเดียวให้ทั้งห้อง</div>
+   ${R.beds.map((p,i)=>{const tr=triage(p),f=fit(p),b=f?Object.keys(f).sort((a,c)=>f[c]-f[a])[0]:null;
+     return `<div class="bedline"><span class="no">0${i+1}</span><span class="nm">${p.nick||"—"}</span><span>${tr.lvl?`<span class="stamp ${tr.lvl}" style="font-size:14px;padding:3px 8px">${{ok:"ผ่าน",warn:"มีเงื่อนไข",stop:"ร่วมไม่ได้"}[tr.lvl]}</span>`:`<span class="kicker">ยังไม่คัดกรอง</span>`}</span><span class="kicker">${b&&tr.lvl!=="stop"?`เหมาะกับ ${SETS[b].name} ${f[b]}%`:""}</span></div>`}).join("")}
+   ${rp?`<div class="verdictbig"><span class="set" style="color:${SETS[rp.pick].hex}">${SETS[rp.pick].name}</span><div><div style="font:700 20px var(--h)">${SETS[rp.pick].th}</div><div class="notes" style="padding:0;list-style:none">${rp.why}</div></div></div>
+     <div class="fit">${Object.keys(SETS).map(k=>`<span>${SETS[k].name}</span><i><b style="width:${rp.sum[k]}%;background:${SETS[k].color}"></b></i><span>${rp.sum[k]}%</span>`).join("")}</div>
+     ${rp.flags.length?`<p><b>ปรับทั้งรอบ:</b> <span class="notes" style="padding:0">${rp.flags.join(" · ")}</span></p>`:""}
+     <div class="nav" style="justify-content:flex-start;padding:18px 0 22px"><button class="btn pri" id="go">${R.confirmed?`ส่งแล้ว: ${SETS[R.confirmed].name} ✓`:"ยืนยันเซ็ตและส่งไปหน้า Control"}</button></div>`:`<div class="empty"><div class="hand">ยังไม่มีใครคัดกรองเสร็จ</div></div>`}
+   ${LIVE?`<div class="nav" style="justify-content:flex-start;padding:0 0 18px"><button class="btn" id="newRound">ปิดแฟ้ม เริ่มรอบใหม่</button></div>`:""}
+   <div class="foot"><div>รอบ<b>${R.id}</b></div><div>ตัดสินโดย<b>ระบบ + staff ยืนยัน</b></div><div>วันที่<b>${TH_DATE()}</b></div></div>`}
+function postSheet(){const i=R.tab-1,p=R.beds[i];const q=p.post;
+  const head=`<div class="clip"></div><span class="cross tr"></span><div class="head"><div><div class="lockup">UNSENSORY RESEARCH LAB <span>/ SENSORY DE-FREQ</span></div><div class="kicker" style="margin-top:4px">บันทึกหลังจบรอบ</div><div class="title">เตียง ${i+1}${p.nick?`<span class="hand">${p.nick}</span>`:""}</div></div><div class="regno">HN ${hn(i)}</div></div><div class="sub">ถามแบบเดียวกับก่อนเริ่ม จะได้เทียบก่อนกับหลังในรายงาน</div>`;
+  if(!fit(p))return head+`<div class="empty"><div class="hand">ยังไม่ได้คัดกรอง</div></div>`;
+  return head+`<div class="body" style="padding:14px 0 0">
+   <div class="q"><label>พลังงานตอนนี้<small>ก่อนเริ่ม: ${p.energy}</small></label>${scale("p_energy","หมดแรง","เต็มถัง",q.energy)}</div>
+   <div class="q"><label>ความเครียด<small>ก่อนเริ่ม: ${p.stress}</small></label>${scale("p_stress","สบายๆ","ตึงมาก",q.stress)}</div>
+   <div class="q"><label>ในหัวมีเรื่องวนแค่ไหน<small>ก่อนเริ่ม: ${p.busy}</small></label>${scale("p_busy","โล่ง","วนไม่หยุด",q.busy)}</div>
+   <div class="q"><label for="word">ถ้าให้ใช้คำเดียว ตอนนี้รู้สึก</label><input class="line" id="word" value="${q.word}" placeholder="…"></div>
+   <div class="nav"><button class="btn pri" id="toReport" ${q.energy&&q.stress&&q.busy?"":"disabled"}>ออกใบตรวจ</button></div></div>
+   <div class="foot"><div>เลขทะเบียน<b>${R.id}-B${i+1}</b></div><div>ผู้บันทึก<b>Unsensory Team</b></div><div>วันที่<b>${TH_DATE()}</b></div></div>`}
+/* ── บัตร + ใบตรวจ: วาดด้วย report_view.js (ตัวเดียวกับหน้าใบตรวจบนมือถือ) ── */
+function localD(i){const p=R.beds[i];return {code:`${R.id}-B${i+1}`,round:R.id,bed:i+1,nick:p.nick,age:p.age,hn:hn(i),set:R.confirmed||(roundPick()||{}).pick||null,
+  came_for:p.mood.slice(0,2),before:{energy:p.energy,stress:p.stress,busy:p.busy},post:p.post.stress?p.post:null,status:"waiting",date:null,measured:null}}
+function demoMeasured(){const c=trace(3,90,.3,.35).map((v,k)=>+Math.min(.95,Math.max(.05,v+k/90*.35)).toFixed(3));
+  return {calm:c,bpm:{avg:71,min:64,max:82},alpha_hz:10.2,synced:2,blinks:14,hrv_rmssd:null,duration_s:310,
+    prints:{brain:c.filter((_,k)=>k%2).slice(0,45),heart:trace(5,60,850,120).map(Math.round),blink:[6,13,15,27,41,44,58,66,79,83,92,120,151,160,199,230,262,288]}}}
+function dataFor(i){const p=R.beds[i];if(LIVE&&p.report)return {...p.report,set:R.confirmed||p.report.set};return localD(i)}
+function cardHtml(i){const p=R.beds[i],D=dataFor(i),qr=LIVE&&p.url?RV.qrSvg(p.url,92):`<svg width="92" height="92" viewBox="-1 -1 23 23" shape-rendering="crispEdges" style="background:#fff">${qrFake()}</svg>`;
+  const lan=LIVE&&R.server&&!R.server.report_base;
+  return RV.card(D)+`<div class="keep">${qr}
+    <div><b>สแกนเก็บบัตรไว้ในมือถือ</b><span>${LIVE?"":"(โหมดตัวอย่าง: QR ยังไม่ใช่ลิงก์จริง) · "}ลิงก์เดียวกันนี้จะกลายเป็นใบตรวจหลังนอนเสร็จ${lan?" · ตอนนี้เปิดได้เฉพาะใน wifi งาน":""}</span>
+    <button class="btn pri" id="save">บันทึกบัตรเป็นรูป</button></div></div>
+   <div id="shot"></div>
+   <button class="close" id="ovx">ปิด</button>`}
+function reportHtml(i){const p=R.beds[i];let D=dataFor(i);
+  if(!LIVE)D={...D,status:"done",measured:demoMeasured(),set:D.set||"relax"};
+  const note=!LIVE?`<p style="color:#ddd;font-size:13px;margin:0 0 10px">โหมดตัวอย่าง · ตัวเลขในใบนี้เป็นค่าสมมุติ</p>`:D.status!=="done"?`<p style="color:#ddd;font-size:13px;margin:0 0 10px">ยังไม่จบรอบ · ค่าที่วัดจะขึ้นเองหลังจบรอบที่หน้า Control</p>`:"";
+  return `${note}<div class="phone">${RV.record(D,{url:LIVE?p.url:""})}</div>${LIVE&&p.url?`<p style="color:#bbb;font:12px var(--m);margin-top:10px;word-break:break-all;max-width:380px;text-align:center">${RV.esc(p.url)}</p>`:""}<button class="close" id="ovx">ปิด</button>`}
+
+/* ── ต่อกับเครื่อง PC ── เปิดจาก PC (http://<ip>:8780/intake) = โหมดจริง · เปิดไฟล์เดี่ยว = โหมดตัวอย่าง */
+/* ── ต่อระบบ ──
+   cloud = เปิดจากเว็บ (iPad หน้าโฮม) → คุยกับ Supabase ตรง ใช้ PIN ทีม
+   local = เปิดจากเครื่อง PC ใน wifi งาน (สำรองตอนเน็ตล่ม)
+   demo  = เปิดไฟล์เดี่ยว / ลิงก์ตัวอย่าง */
+const SB={url:"https://rocvqdplaesxmyncjcfz.supabase.co",key:"sb_publishable_5Nf1pNSNGkyp-7cOnUEzsQ_-F1f8xKC",booth:"booth-1"};
+let MODE="demo";
+const pinGet=()=>localStorage.getItem("defreq.pin")||"";
+function askPin(msg){const v=prompt(msg||"ใส่ PIN ของทีม (6 หลัก)");if(v===null)throw new Error("ต้องใส่ PIN");localStorage.setItem("defreq.pin",v.trim())}
+async function api(path,body){
+  const r=await fetch(path,{method:body?"POST":"GET",headers:{"Content-Type":"application/json","X-Pin":pinGet()},body:body?JSON.stringify(body):undefined,cache:"no-store"});
+  if(r.status===401){askPin();return api(path,body)}
+  const d=await r.json();if(!r.ok)throw new Error(d.error||("HTTP "+r.status));return d}
+async function rpc(fn,args,tries=0){
+  const r=await fetch(`${SB.url}/rest/v1/rpc/${fn}`,{method:"POST",cache:"no-store",
+    headers:{apikey:SB.key,Authorization:`Bearer ${SB.key}`,"Content-Type":"application/json","Content-Profile":"unsensory"},
+    body:JSON.stringify({p_pin:pinGet(),p_booth:SB.booth,...args})});
+  const d=await r.json().catch(()=>null);
+  if(!r.ok)throw new Error((d&&d.message)||("ระบบตอบกลับ "+r.status));
+  if(d&&d.error==="pin"){if(tries>2)throw new Error("PIN ไม่ถูก");askPin(tries?"PIN ไม่ถูก ลองใหม่อีกครั้ง":undefined);return rpc(fn,args,tries+1)}
+  return d}
+const reportUrl=t=>t?new URL("report.html",location.href).href.split("?")[0]+"?t="+encodeURIComponent(t):"";
+const B={
+  round:()=>MODE==="cloud"?rpc("staff_round",{}):api("/api/round"),
+  intake:async(n,p)=>MODE==="cloud"?rpc("staff_intake",{p_bed:n,p}):(await api(`/api/bed/${n}/intake`,p),api("/api/round")),
+  confirm:(set,flags)=>MODE==="cloud"?rpc("staff_confirm",{p_set:set,p_flags:flags}):api("/api/round/confirm",{set,flags}),
+  post:async(n,p)=>MODE==="cloud"?rpc("staff_post",{p_bed:n,p}):(await api(`/api/bed/${n}/post`,p),api("/api/round")),
+  newRound:()=>MODE==="cloud"?rpc("staff_round_new",{}):api("/api/round/new",{})};
+function hydrate(S){R.server=S;if(R.id!==S.id){R.id=S.id;R.beds=[blank(),blank(),blank()]}R.confirmed=S.set;
+  [0,1,2].forEach(i=>{const s=S.beds[String(i+1)],p=R.beds[i];if(!s){if(p._sent)R.beds[i]=blank();return}
+    if(!p._sent||p.nick!==s.nick){const ck=s.checkin||{},gm=s.gimmick||{};
+      Object.assign(p,{nick:s.nick,age:s.age,step:4,max:4,_tri:s.triage,_notes:s.notes||[],_fit:s.fit,safety:{},sleep:"",caffeine:"",
+        consent:{sensor:true,data:true,photo:false},energy:ck.energy||0,stress:ck.stress||0,busy:ck.busy||0,sleepy:ck.sleepy||0,mood:gm.mood||[],weather:gm.weather||"",want:gm.want||""});
+      if(s.post)p.post={...p.post,...s.post}}
+    const nk=`defreq.notes.${S.id}.${i+1}`;if(p._notes&&p._notes.length===0){try{p._notes=JSON.parse(localStorage.getItem(nk)||"[]")}catch(e){}}
+    Object.assign(p,{_sent:true,hn:s.hn,url:s.url||reportUrl(s.token),report:s.report})})}
+async function sendBed(i){const p=R.beds[i],tr=triage(p);if(!LIVE||!tr.lvl)return;p._busy=true;
+  try{try{localStorage.setItem(`defreq.notes.${R.id}.${i+1}`,JSON.stringify(tr.notes))}catch(e){}
+    hydrate(await B.intake(i+1,{nick:p.nick,age:p.age,consent:p.consent,triage:tr.lvl,notes:tr.notes,fit:fit(p),
+      checkin:{energy:p.energy,stress:p.stress,busy:p.busy,sleepy:p.sleepy},gimmick:{mood:p.mood,weather:p.weather,want:p.want}}));p._err=""}
+  catch(e){p._err="ส่งเข้าเครื่อง PC ไม่ได้: "+e.message}
+  p._busy=false;draw()}
+setInterval(async()=>{if(!LIVE||document.hidden)return;
+  try{hydrate(await B.round());const a=document.activeElement;if(!$("#ov").innerHTML&&!(a&&a.tagName==="INPUT"))draw()}catch(e){}},4000);
+function draw(){
+  const sv=R.server,cl=sv&&sv.cloud;
+  $("#modes").innerHTML=[["intake","คัดกรอง"],["post","หลังจบรอบ"]].map(([k,l])=>`<button class="${R.view===k?"on":""}" data-v="${k}">${l}</button>`).join("")
+   +`<span class="conn">${!LIVE?"โหมดตัวอย่าง · ไม่ได้ต่อระบบ":`รอบ ${R.id}${sv&&sv.recording?" · กำลังเก็บค่า":""} · ${MODE==="cloud"?(sv&&sv.pc_online?"PC พร้อม":"PC ยังไม่ออนไลน์"):"ต่อ PC ตรง"+(cl&&cl.enabled?(cl.online?" · ขึ้นระบบแล้ว":" · รอส่งขึ้นระบบ"):"")}`}</span>`;
+  drawTabs();
+  $("#sheet").innerHTML=R.tab===0?summarySheet():R.view==="post"?postSheet():intakeSheet();bind()}
+function drawTabs(){
+  $("#tabs").innerHTML=R.beds.map((p,i)=>{const tr=triage(p);return `<button class="${R.tab===i+1?"on":""}" data-t="${i+1}"><span class="dot ${tr.lvl||""}"></span>เตียง ${i+1}${p.nick?" · "+p.nick:""}</button>`}).join("")+`<button class="${R.tab===0?"on":""}" data-t="0">สรุปรอบ</button>`;
+  document.querySelectorAll("#tabs [data-t]").forEach(b=>b.onclick=()=>{R.tab=+b.dataset.t;draw()})}
+function overlay(html){$("#ov").innerHTML=`<div class="overlay"><div style="display:flex;flex-direction:column;align-items:center">${html}</div></div>`;$("#ovx").onclick=()=>$("#ov").innerHTML=""}
+function bind(){const i=R.tab-1,p=R.beds[i]||{};
+  document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{R.view=b.dataset.v;if(!R.tab)R.tab=1;draw()});
+  document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{R.tab=+b.dataset.t;draw()});
+  const st=$("#start");if(st)st.onclick=()=>{p._start=true;draw();setTimeout(()=>$("#nick")&&$("#nick").focus(),0)};
+  const n=$("#nick");if(n)n.oninput=()=>{p.nick=n.value.trim();const b=$("#next");if(b)b.disabled=!canNext(p)};
+  if(n)n.onchange=()=>{drawTabs();const h=document.querySelector(".title .hand");if(h)h.textContent=p.nick};
+  const w=$("#word");if(w)w.oninput=()=>{p.post.word=w.value.trim()};
+  document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>{const k=b.dataset.ch,v=b.dataset.k;if(k==="mood"){p.mood=p.mood.includes(v)?p.mood.filter(x=>x!==v):[...p.mood,v]}else p[k]=p[k]===v?"":v;draw()});
+  document.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{const k=b.dataset.sc,v=+b.dataset.n;if(k.startsWith("p_"))p.post[k.slice(2)]=v;else p[k]=v;draw()});
+  document.querySelectorAll("[data-sf]").forEach(b=>b.onclick=()=>{p.safety[b.dataset.sf]=b.dataset.v==="1";draw()});
+  document.querySelectorAll("[data-cs]").forEach(b=>b.onclick=()=>{p.consent[b.dataset.cs]=!p.consent[b.dataset.cs];draw()});
+  document.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{p.step=+b.dataset.st;draw()});
+  const nx=$("#next");if(nx)nx.onclick=()=>{p.step++;p.max=Math.max(p.max||0,p.step);draw();if(p.step===4)sendBed(i)};
+  const cd=$("#card");if(cd)cd.onclick=()=>{overlay(cardHtml(i));const sv=$("#save");sv.onclick=async()=>{
+    sv.disabled=true;sv.textContent="กำลังสร้างรูป…";
+    try{await document.fonts.ready;const c=await html2canvas(document.querySelector(".lanyard"),{backgroundColor:null,scale:3});
+      $("#shot").innerHTML=`<img alt="บัตรผู้รับบริการ" src="${c.toDataURL("image/png")}"><p>กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ"</p>`;sv.textContent="สร้างรูปแล้ว"}
+    catch(e){sv.disabled=false;sv.textContent="บันทึกบัตรเป็นรูป";$("#shot").innerHTML=`<p>สร้างรูปไม่ได้ ลองกดอีกครั้ง</p>`}}};
+  const go=$("#go");if(go)go.onclick=async()=>{const rp=roundPick();if(!LIVE){R.confirmed=rp.pick;draw();return}
+    go.disabled=true;try{hydrate(await B.confirm(rp.pick,rp.flags))}catch(e){alert(e.message)}draw()};
+  const nr=$("#newRound");if(nr)nr.onclick=async()=>{if(!confirm("ปิดแฟ้มรอบนี้ แล้วเริ่มรอบใหม่?"))return;try{const S=await B.newRound();R.id="";hydrate(S);R.tab=1;R.view="intake"}catch(e){alert(e.message)}draw()};
+  const rs=$("#resend");if(rs)rs.onclick=()=>sendBed(i);
+  const tr=$("#toReport");if(tr)tr.onclick=async()=>{if(LIVE){tr.disabled=true;try{hydrate(await B.post(i+1,p.post))}catch(e){alert(e.message)}}overlay(reportHtml(i))}}
+draw();
+(async()=>{const q=new URLSearchParams(location.search);
+  try{if(q.has("demo"))throw 0;let S=null;
+    try{const r=await fetch("api/round",{cache:"no-store",headers:{"X-Pin":pinGet()}});if(r.ok||r.status===401){MODE="local";S=await api("api/round")}}catch(e){}
+    if(!S){if(location.protocol!=="https:"||/claude/.test(location.hostname))throw 0;MODE="cloud";if(!pinGet())askPin();S=await B.round()}
+    LIVE=true;R.beds=[blank(),blank(),blank()];R.tab=1;R.view="intake";hydrate(S);document.title="Sensory De-Freq · แฟ้มคัดกรอง"}catch(e){}draw()})();
+</script>
+</body>
+</html>
