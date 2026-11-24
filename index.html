@@ -90,6 +90,17 @@ button,input{font:inherit;color:inherit}button{cursor:pointer}
 .keep{display:flex;gap:16px;align-items:center;margin-top:18px;background:var(--paper);padding:12px 16px;border-radius:10px;max-width:420px}
 .keep b{display:block;font:700 15px var(--h)}.keep span{display:block;font-size:13px;color:var(--pencil);margin-bottom:8px}
 #shot img{max-width:300px;margin-top:14px;border-radius:12px}#shot p{color:#ddd;font-size:13px;text-align:center}
+.inq{margin-left:10px;background:var(--ink);color:var(--paper);border:0;border-radius:2px;padding:6px 12px;font:700 14px var(--h)}
+.inq.has{background:#C0392B;animation:inq 1.2s infinite}@keyframes inq{50%{opacity:.6}}
+.inq.ghost{background:none;color:inherit;border:1px solid currentColor;font-weight:500}
+.case{background:var(--paper);border-radius:6px;padding:14px 16px;width:min(560px,92vw);margin-bottom:10px}
+.case .hd{display:flex;align-items:center;gap:12px}.case .hd b{font:700 20px var(--h)}.case .hd small{color:var(--pencil);font:12px var(--m)}
+.case ul{margin:8px 0 0;padding-left:18px;font-size:14px}
+.case .act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.case .act button{border:1px solid var(--ink);background:#fff;color:var(--ink);border-radius:2px;padding:8px 12px;font:700 14px var(--h)}
+.case .act button.pri{background:var(--ink);color:var(--paper)}.case .act button[disabled]{opacity:.35}
+.qrs{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.qrs div{background:var(--paper);border-radius:8px;padding:14px;text-align:center;font:700 18px var(--h)}
 .close{margin-top:16px;color:#ddd;background:none;border:1px solid #666;padding:8px 18px;border-radius:2px}
 @media (max-width:900px){.desk{padding:10px 50px 10px 8px}.body{padding-left:0}.q{grid-template-columns:1fr}.title{font-size:34px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -104,41 +115,19 @@ button,input{font:inherit;color:inherit}button{cursor:pointer}
 <script src="vendor/html2canvas.min.js"></script>
 <script src="vendor/qrcode.js"></script>
 <script src="report_view.js"></script>
+<script src="intake_core.js"></script>
 <script>
 const $=s=>document.querySelector(s);
 const SETS={baseline:{name:"BASELINE",th:"ตั้งศูนย์",color:"var(--baseline)",hex:"#0FA3BF"},boost:{name:"BOOST",th:"ปลุกพลัง",color:"var(--boost)",hex:"#E8265E"},relax:{name:"RELAX",th:"ปล่อยวาง",color:"var(--relax)",hex:"#2DB3A8"}};
 const STEPS=["ข้อมูลและความยินยอม","ความปลอดภัย","เช็กอินร่างกาย","ช่วงนี้เป็นยังไง","ผลคัดกรอง"];
-// คำถามความปลอดภัย: stop = ร่วมไม่ได้ · warn = ร่วมได้แต่ปรับ
-const SAFETY=[
- {k:"seizure",t:"เคยมีอาการชัก หรือไวต่อแสงกะพริบ",s:"รวมถึงโรคลมชักที่คุมได้แล้ว",lvl:"stop",note:"ร่วมนอนในห้องไม่ได้ (มีแสงกะพริบ) · ชวนดูจากด้านนอก"},
- {k:"implant",t:"มีเครื่องกระตุ้นหัวใจ หรืออุปกรณ์ฝังในร่างกาย",s:"เช่น pacemaker, ประสาทหูเทียม",lvl:"stop",note:"ห้ามติดขั้วไฟฟ้า · ชวนดูจากด้านนอก"},
- {k:"migraine",t:"เป็นไมเกรน เวียนหัวง่าย หรือเมารถง่าย",lvl:"warn",note:"ลดแสงกะพริบ · ไม่แนะนำ BOOST"},
- {k:"pregnant",t:"ตั้งครรภ์อยู่",lvl:"warn",note:"ลดเสียงเบสสั่น · ไม่แนะนำ BOOST"},
- {k:"skin",t:"ผิวแพ้ง่าย หรือแพ้เทปกาว",lvl:"warn",note:"ใช้แค่เซนเซอร์หัวใจที่นิ้ว ไม่แปะขั้วที่หน้าผาก"},
- {k:"space",t:"กลัวที่แคบ หรือกลัวความมืด",lvl:"warn",note:"ให้นอนเตียงริม · เปิดไฟสลัวไว้"},
- {k:"alcohol",t:"ดื่มแอลกอฮอล์ภายใน 6 ชั่วโมงนี้",lvl:"warn",note:"ค่าสมองอาจเพี้ยน · ระบุในรายงาน"},
- {k:"sound",t:"ไวต่อเสียงดัง",lvl:"warn",note:"ลดเสียงลง 20%"}];
-const MOOD=["งานถาโถม","นอนไม่พอ","ตื่นเต้นกับบางอย่าง","ใจลอย","เบื่อๆ","อยากหนีไปทะเล","กำลังดี","คิดเยอะ"];
-const WEATHER=[["sun","แดดจ้า"],["cloud","เมฆครึ้ม"],["drizzle","ฝนพรำ"],["storm","พายุ"],["fog","หมอกลง"]];
-const WANT=[["rest","ได้พัก"],["energy","ได้พลัง"],["self","ได้อยู่กับตัวเอง"]];
-const blank=()=>({step:0,nick:"",age:"",consent:{sensor:false,data:false,photo:false},safety:{},energy:0,stress:0,busy:0,sleepy:0,sleep:"",caffeine:"",mood:[],weather:"",want:"",post:{energy:0,stress:0,busy:0,word:""}});
+// คำถาม/กติกาคัดกรองอยู่ใน intake_core.js (ใช้ร่วมกับหน้ามือถือ self.html)
+const {SAFETY,MOOD,WEATHER,WANT,CONSENT,blank,triage,fit}=IC;
 const R={id:"R-"+new Date().toISOString().slice(5,10).replace("-","")+"-07",beds:[blank(),blank(),blank()],cur:0,view:"intake",confirmed:null};
 // ตัวอย่างข้อมูล 2 เตียง ให้เห็นภาพรวม
 Object.assign(R.beds[1],{step:4,nick:"มุก",age:"25-34",consent:{sensor:true,data:true,photo:false},safety:{seizure:false,implant:false,migraine:true,pregnant:false,skin:false,space:false,alcohol:false,sound:false},energy:2,stress:4,busy:5,sleepy:3,sleep:"5-6",caffeine:"2",mood:["งานถาโถม","คิดเยอะ"],weather:"storm",want:"rest"});
 Object.assign(R.beds[2],{step:4,nick:"ต้น",age:"18-24",consent:{sensor:true,data:true,photo:true},safety:{seizure:false,implant:false,migraine:false,pregnant:false,skin:false,space:false,alcohol:false,sound:false},energy:2,stress:2,busy:3,sleepy:4,sleep:"7-8",caffeine:"0",mood:["เบื่อๆ","ใจลอย"],weather:"cloud",want:"energy"});
 
 /* ── คำนวณ ── */
-function triage(p){if(p._tri&&!Object.keys(p.safety).length)return {lvl:p._tri,notes:p._notes||[]};const on=SAFETY.filter(q=>p.safety[q.k]);if(on.some(q=>q.lvl==="stop"))return {lvl:"stop",notes:on.map(q=>q.note)};
-  if(SAFETY.some(q=>p.safety[q.k]===undefined))return {lvl:null,notes:[]};return {lvl:on.length?"warn":"ok",notes:on.map(q=>q.note)}}
-function fit(p){ // คะแนนความเหมาะของแต่ละเซ็ต (0–100) จากเช็กอิน + คำตอบชวนคุย
-  if(p._fit&&!p.sleep)return p._fit;
-  if(!p.energy||!p.stress)return null;
-  const s={baseline:2,boost:0,relax:0},mood=m=>p.mood.includes(m)?1:0;
-  s.relax+=p.stress*1.0+p.busy*.7+(p.sleep==="≤4"||p.sleep==="5-6"?1:0)+({storm:1.6,drizzle:1}[p.weather]||0)+(p.want==="rest"?2.2:0)+.7*(mood("งานถาโถม")+mood("นอนไม่พอ")+mood("คิดเยอะ"));
-  s.boost+=(5-p.energy)*.9+(p.stress<=3?p.sleepy*.5:0)+({cloud:1,fog:1.2}[p.weather]||0)+(p.want==="energy"?2.2:0)+.7*(mood("เบื่อๆ")+mood("ใจลอย"))-p.stress*.3;
-  s.baseline+=(p.want==="self"?2.2:0)+(p.weather==="sun"?1:0)+.7*(mood("กำลังดี")+mood("ตื่นเต้นกับบางอย่าง"))+(Math.abs(p.energy-3)<=1&&p.stress<=3?1.4:0);
-  const e=Object.fromEntries(Object.entries(s).map(([k,v])=>[k,Math.exp(Math.max(0,v)*.3)])),t=e.baseline+e.boost+e.relax;
-  return Object.fromEntries(Object.entries(e).map(([k,v])=>[k,Math.round(v/t*100)]))}
 function roundPick(){
   const ppl=R.beds.map(p=>({p,tr:triage(p),f:fit(p)})).filter(x=>x.tr.lvl&&x.tr.lvl!=="stop"&&x.f);
   if(!ppl.length)return null;
@@ -148,7 +137,7 @@ function roundPick(){
   const order=Object.keys(sum).sort((a,b)=>sum[b]-sum[a]);let pick=order[0],why="";
   if(pick==="boost"&&noBoost){pick=order[1];why=`BOOST ได้คะแนนสูงสุด แต่มีคนที่ไม่ควรเจอแสงจัด เลยใช้ ${SETS[pick].name} แทน`}
   else{const top=ppl.filter(x=>Object.keys(x.f).sort((a,b)=>x.f[b]-x.f[a])[0]===pick).map(x=>x.p.nick||"ไม่มีชื่อ");why=`${top.join(", ")||"กลุ่ม"} ต้องการ${SETS[pick].th}มากที่สุด · เฉลี่ยจาก ${n} คน`}
-  const flags=[];if(has("ลดแสงกะพริบ"))flags.push("ลดแสงกะพริบทั้งรอบ");if(has("ลดเสียงเบสสั่น"))flags.push("ลดเสียงเบสสั่น");if(has("ลดเสียงลง 20%"))flags.push("ลดเสียงลง 20%");
+  const flags=[];if(has("ลดแสงกะพริบ"))flags.push("ลดแสงกะพริบทั้งรอบ");
   return {sum,pick,why,flags,noBoost}}
 
 function trace(seed,n,base,amp){let x=base,o=[];for(let i=0;i<n;i++){x+=(Math.sin(i*.37+seed)*.5+Math.sin(i*.11+seed*2)*.8)*amp*.12;x=x*.97+base*.03;o.push(x)}return o}
@@ -168,7 +157,7 @@ function secBody(p,i){
   if(i===0)return `<div class="q"><label for="nick">ชื่อเล่น</label><input class="line" id="nick" value="${p.nick}" autocomplete="off" placeholder="…"></div>
     <div class="q"><label>ช่วงอายุ</label><div>${opts("age",[["<18","ต่ำกว่า 18"],"18-24","25-34","35-44","45+"],p.age)}${p.age==="<18"?`<div class="notes">ต้องมีผู้ปกครองเซ็นยินยอมที่บูธก่อน</div>`:""}</div></div>
     <div class="q"><label>ความยินยอม<small>ให้ผู้ร่วมติ๊กเอง</small></label><div>
-      ${[["sensor","<b>ติดเซนเซอร์</b> ขั้วที่หน้าผากและเซนเซอร์ที่นิ้ว ถอดออกได้ทุกเมื่อ · จำเป็น"],["data","<b>เก็บข้อมูลเพื่อทำรายงาน</b> เก็บ 30 วัน ไม่ขาย ไม่แชร์ ขอลบได้ · รายงานมีคลิปภาพและเสียง 15 วินาทีจากรอบของคุณ (ไม่มีภาพใบหน้า ดูได้ 14 วัน) · จำเป็น"],["photo","ถ่ายรูปบรรยากาศได้ · ไม่บังคับ"]].map(([k,t])=>`<button class="consent opt ${p.consent[k]?"on":""}" data-cs="${k}"><i>${p.consent[k]?"✓":""}</i><span style="font-family:var(--f);font-size:15px;color:var(--ink)">${t}</span></button>`).join("")}</div></div>`;
+      ${CONSENT.map(([k,t])=>`<button class="consent opt ${p.consent[k]?"on":""}" data-cs="${k}"><i>${p.consent[k]?"✓":""}</i><span style="font-family:var(--f);font-size:15px;color:var(--ink)">${t}</span></button>`).join("")}</div></div>`;
   if(i===1)return `<p class="kicker" style="margin:0 0 6px">ถามทีละข้อ ไม่แน่ใจให้ตอบ "ใช่" ไว้ก่อน · คำตอบหมวดนี้ไม่ถูกเก็บ เก็บแค่ผลคัดกรอง</p>${SAFETY.map(q=>`<div class="yn"><span>${q.t}${q.s?`<small>${q.s}</small>`:""}</span><span class="seg">
      <button class="opt ${p.safety[q.k]===false?"on":""}" data-sf="${q.k}" data-v="0"><i>${p.safety[q.k]===false?"✓":""}</i><span>ไม่ใช่</span></button>
      <button class="opt ${p.safety[q.k]===true?"on":""}" data-sf="${q.k}" data-v="1" style="${p.safety[q.k]===true?`--pen:${q.lvl==="stop"?"var(--stop)":"var(--warn)"}`:""}"><i>${p.safety[q.k]===true?"✓":""}</i><span>ใช่</span></button></span></div>`).join("")}`;
@@ -274,8 +263,7 @@ function hydrate(S){R.server=S;if(R.id!==S.id){R.id=S.id;R.beds=[blank(),blank()
     Object.assign(p,{_sent:true,hn:s.hn,url:s.url||reportUrl(s.token),report:s.report})})}
 async function sendBed(i){const p=R.beds[i],tr=triage(p);if(!LIVE||!tr.lvl)return;p._busy=true;
   try{try{localStorage.setItem(`defreq.notes.${R.id}.${i+1}`,JSON.stringify(tr.notes))}catch(e){}
-    hydrate(await B.intake(i+1,{nick:p.nick,age:p.age,consent:p.consent,triage:tr.lvl,notes:tr.notes,fit:fit(p),
-      checkin:{energy:p.energy,stress:p.stress,busy:p.busy,sleepy:p.sleepy},gimmick:{mood:p.mood,weather:p.weather,want:p.want}}));p._err=""}
+    hydrate(await B.intake(i+1,IC.payload(p)));p._err=""}
   catch(e){p._err="ส่งเข้าเครื่อง PC ไม่ได้: "+e.message}
   p._busy=false;draw()}
 setInterval(async()=>{if(!LIVE||document.hidden)return;
@@ -283,6 +271,8 @@ setInterval(async()=>{if(!LIVE||document.hidden)return;
 function draw(){
   const sv=R.server,cl=sv&&sv.cloud;
   $("#modes").innerHTML=[["intake","คัดกรอง"],["post","หลังจบรอบ"]].map(([k,l])=>`<button class="${R.view===k?"on":""}" data-v="${k}">${l}</button>`).join("")
+   +(LIVE&&MODE==="cloud"?`<button class="inq ${INBOX.length?"has":""}" id="inbox">เคสรอรับ ${INBOX.length}</button>`:"")
+   +`<button class="inq ghost" id="selfqr">QR สำรอง</button>`
    +`<span class="conn">${!LIVE?"โหมดตัวอย่าง · ไม่ได้ต่อระบบ":`รอบ ${R.id}${sv&&sv.recording?" · กำลังเก็บค่า":""} · ${MODE==="cloud"?(sv&&sv.pc_online?"PC พร้อม":"PC ยังไม่ออนไลน์"):"ต่อ PC ตรง"+(cl&&cl.enabled?(cl.online?" · ขึ้นระบบแล้ว":" · รอส่งขึ้นระบบ"):"")}`}</span>`;
   drawTabs();
   $("#sheet").innerHTML=R.tab===0?summarySheet():R.view==="post"?postSheet():intakeSheet();bind()}
@@ -311,8 +301,38 @@ function bind(){const i=R.tab-1,p=R.beds[i]||{};
   const go=$("#go");if(go)go.onclick=async()=>{const rp=roundPick();if(!LIVE){R.confirmed=rp.pick;draw();return}
     go.disabled=true;try{hydrate(await B.confirm(rp.pick,rp.flags))}catch(e){alert(e.message)}draw()};
   const nr=$("#newRound");if(nr)nr.onclick=async()=>{if(!confirm("ปิดแฟ้มรอบนี้ แล้วเริ่มรอบใหม่?"))return;try{const S=await B.newRound();R.id="";hydrate(S);R.tab=1;R.view="intake"}catch(e){alert(e.message)}draw()};
+  const ib=$("#inbox");if(ib)ib.onclick=()=>{INBOX_OPEN=true;drawInbox()};
+  const sq=$("#selfqr");if(sq)sq.onclick=()=>{overlay(`<p style="color:#ddd;margin:0 0 12px;text-align:center">สำรองกรณีสแกน QR ที่เตียงไม่ได้ · ให้สแกน QR ของเตียงที่จะนอน</p>
+    <div class="qrs">${[1,2,3].map(n=>`<div>${RV.qrSvg(SELF_URL(n),180)}<div>เตียง ${n}</div></div>`).join("")}</div><button class="close" id="ovx">ปิด</button>`)};
   const rs=$("#resend");if(rs)rs.onclick=()=>sendBed(i);
   const tr=$("#toReport");if(tr)tr.onclick=async()=>{if(LIVE){tr.disabled=true;try{hydrate(await B.post(i+1,p.post))}catch(e){alert(e.message)}}overlay(reportHtml(i))}}
+/* ── เคสจากมือถือ (QR ที่เตียง → self.html) ── รอทีมกดรับ · ใช้ได้ในโหมด cloud */
+const SELF_URL=n=>"https://babesnoopy.github.io/defreq/self.html?bed="+n;
+let INBOX=[],INBOX_OPEN=false;
+const TRI={ok:"ผ่าน",warn:"ทีมปรับให้",stop:"ร่วมนอนไม่ได้"};
+function drawInbox(){if(!INBOX_OPEN)return;
+  const occ=n=>{const p=R.beds[n-1];return p&&p._sent&&p.nick?p.nick:""};
+  const cases=INBOX.map(c=>{const p=c.p||{},t=p.triage,mins=Math.max(0,Math.round((Date.now()-new Date(c.at))/60000));
+    return `<div class="case"><div class="hd"><span class="stamp ${t}">${TRI[t]||t}</span><b>${RV.esc(p.nick||"")}</b><small>อายุ ${RV.esc(p.age||"")} · สแกนจากเตียง ${c.bed} · ${mins} นาทีก่อน</small></div>
+      ${(p.notes||[]).length?`<ul>${p.notes.map(x=>`<li>${RV.esc(x)}</li>`).join("")}</ul>`:""}
+      <div class="act">${t==="stop"?`<span style="font-size:13px">ร่วมนอนไม่ได้ · ไปคุยกับผู้เข้าร่วม แล้วกดรับทราบ (ไม่ใส่เตียง)</span><button class="pri" data-rej="${c.id}" data-ack="1">รับทราบ</button>`
+        :[1,2,3].map(n=>`<button class="${n===c.bed?"pri":""}" data-acc="${c.id}" data-bed="${n}">รับเข้าเตียง ${n}${occ(n)?" · มี "+RV.esc(occ(n))+" อยู่":""}</button>`).join("")}
+      ${t==="stop"?"":`<button data-rej="${c.id}">ไม่รับ</button>`}</div></div>`}).join("");
+  overlay(`${cases||`<p style="color:#ddd">ยังไม่มีเคสรอรับ</p>`}<button class="close" id="ovx">ปิด</button>`);
+  $("#ovx").onclick=()=>{INBOX_OPEN=false;$("#ov").innerHTML=""};
+  document.querySelectorAll("[data-acc]").forEach(b=>b.onclick=async()=>{const n=+b.dataset.bed,who=occ(n);
+    if(who&&!confirm(`เตียง ${n} มี ${who} อยู่แล้วในรอบนี้ · แทนที่ด้วยเคสนี้?`))return;
+    document.querySelectorAll("[data-acc],[data-rej]").forEach(x=>x.disabled=true);
+    try{const S=await rpc("staff_accept",{p_id:b.dataset.acc,p_bed:n});const a=S.accepted||{};
+      try{localStorage.setItem(`defreq.notes.${S.id}.${a.bed||n}`,JSON.stringify(a.notes||[]))}catch(e){}
+      R.beds[(a.bed||n)-1]=blank();hydrate(S);R.tab=a.bed||n;R.view="intake"}catch(e){alert(e.message)}
+    await pollInbox();draw();drawInbox()});
+  document.querySelectorAll("[data-rej]").forEach(b=>b.onclick=async()=>{if(!b.dataset.ack&&!confirm("ไม่รับเคสนี้? มือถือของผู้เข้าร่วมจะขึ้นให้ติดต่อทีมที่บูธ"))return;
+    try{await rpc("staff_reject",{p_id:b.dataset.rej})}catch(e){alert(e.message)}await pollInbox();draw();drawInbox()})}
+async function pollInbox(){if(!LIVE||MODE!=="cloud")return;
+  try{const d=await rpc("staff_pending",{});if(Array.isArray(d)){const ch=JSON.stringify(d.map(c=>c.id))!==JSON.stringify(INBOX.map(c=>c.id));INBOX=d;
+    if(ch){const a=document.activeElement;if(INBOX_OPEN)drawInbox();else if(!$("#ov").innerHTML&&!(a&&a.tagName==="INPUT"))draw()}}}catch(e){}}
+setInterval(()=>{if(!document.hidden)pollInbox()},4000);
 draw();
 (async()=>{const q=new URLSearchParams(location.search);
   try{if(q.has("demo"))throw 0;let S=null;
