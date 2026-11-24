@@ -43,6 +43,19 @@ function prints(m,waiting){
   const P=(m&&m.prints)||{},box=(svg,label)=>`<div>${svg||(waiting?`${label}<br>รอเก็บ`:`${label}<br>ไม่ได้วัด`)}</div>`;
   return `<div class="prints">${box(P.brain&&P.brain.length>8?brainPrint(P.brain):"","ลายสมอง")}${box(P.heart&&P.heart.length>8?heartPrint(P.heart):"","ลายหัวใจ")}${box(P.blink&&P.blink.length?blinkPrint(P.blink,m.duration_s):"","ลายกระพริบ")}</div>`}
 
+/* ── คลิปภาพ+เสียง 15 วิ จากรอบของคนนี้ (ช่วงที่เลือกจากกราฟของเขาเอง · engine/clip_pick.py) ──
+   ไม่มี clip = ไม่แสดงหัวข้อนี้ · ยังไม่มี url = กำลังอัป · เกินวันหมดอายุ = บอกว่าหมดอายุ (cloud ลบแล้ว) */
+function clipBox(c){
+  if(!c)return "";
+  const today=new Date().toISOString().slice(0,10),exp=c.expires||"";
+  const ok=typeof c.url==="string"&&/^https:\/\//.test(c.url)&&!(exp&&exp<today);
+  const body=ok
+    ?`<video src="${esc(c.url)}" controls playsinline preload="metadata" style="width:min(240px,70vw);aspect-ratio:1;border-radius:50%;object-fit:cover;background:#000;display:block;margin:6px auto 0"></video>`
+    :`<div style="width:min(240px,70vw);aspect-ratio:1;border-radius:50%;border:1px dashed #BDBFC2;display:grid;place-items:center;margin:6px auto 0;text-align:center;padding:24px;box-sizing:border-box"><span class="na">${exp&&exp<today?"คลิปหมดอายุแล้ว<br>(เก็บไว้ 14 วัน)":"กำลังเตรียมคลิป<br>ลองเปิดใหม่อีกสักครู่"}</span></div>`;
+  return `<h5>คลิปจากรอบของคุณ · 15 วินาที</h5>${body}
+   <div class="kicker" style="text-align:center;margin-top:6px">${esc(c.why||"")}</div>
+   ${ok&&exp?`<div class="disc" style="text-align:center;margin-top:2px">ภาพและเสียงที่สร้างจากร่างกายในรอบนี้ (ไม่มีภาพใบหน้า) · ดูได้ถึง ${thDate(exp)}</div>`:""}`}
+
 /* ── กราฟความนิ่ง (ช่วงที่วัดไม่ได้ = เว้นเส้น) ── */
 function calmGraph(c){
   if(!c||c.filter(v=>v!=null).length<5)return `<div class="mug" style="display:grid;place-items:center">${NA}</div>`;
@@ -73,6 +86,7 @@ function record(D,o){o=o||{};const S=SETS[D.set]||{name:"—",th:""},m=D.measure
     <dt>นิ่งพร้อมเพื่อนร่วมรอบ</dt>${val(m.synced!=null,`${m.synced} ครั้ง`)}
     <dt>กระพริบตา</dt>${val(m.blinks!=null,`${m.blinks} ครั้ง`)}
     <dt>HRV (RMSSD)</dt>${val(m.hrv_rmssd,`${m.hrv_rmssd} ms`)}</dl>
+   ${clipBox(m.clip)}
    <h5>ลายพิมพ์</h5>${prints(m,false)}
    <div class="cardfoot"><span>สมอง</span><span>หัวใจ</span><span>กระพริบตา</span></div>
    <div class="rx"><h6>ใบสั่งยา</h6>
