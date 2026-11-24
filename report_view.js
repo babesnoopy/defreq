@@ -52,7 +52,10 @@ function clipBox(c){
   const body=ok
     ?`<video src="${esc(c.url)}" controls playsinline preload="metadata" style="width:min(240px,70vw);aspect-ratio:1;border-radius:50%;object-fit:cover;background:#000;display:block;margin:6px auto 0"></video>`
     :`<div style="width:min(240px,70vw);aspect-ratio:1;border-radius:50%;border:1px dashed #BDBFC2;display:grid;place-items:center;margin:6px auto 0;text-align:center;padding:24px;box-sizing:border-box"><span class="na">${exp&&exp<today?"คลิปหมดอายุแล้ว<br>(เก็บไว้ 14 วัน)":"กำลังเตรียมคลิป<br>ลองเปิดใหม่อีกสักครู่"}</span></div>`;
-  return `<h5>คลิปจากรอบของคุณ · 15 วินาที</h5>${body}
+  const name=`SENSORY-DEFREQ-${(c.url||"").split("/").slice(-2,-1)[0]||"clip"}.mp4`.replace(/[^A-Za-z0-9._-]/g,"");
+  const save=ok?`<a href="${esc(c.url)}?download=${esc(name)}" data-clip="${esc(c.url)}" data-name="${esc(name)}" onclick="return RV.saveClip(this,event)"
+     style="display:block;width:max-content;margin:10px auto 0;background:#121212;color:#F4F4F2;text-decoration:none;padding:10px 20px;border-radius:2px;font:700 14px var(--h,system-ui)">บันทึกคลิป ↓</a>`:"";
+  return `<h5>คลิปจากรอบของคุณ · 15 วินาที</h5>${body}${save}
    <div class="kicker" style="text-align:center;margin-top:6px">${esc(c.why||"")}</div>
    ${ok&&exp?`<div class="disc" style="text-align:center;margin-top:2px">ภาพและเสียงที่สร้างจากร่างกายในรอบนี้ (ไม่มีภาพใบหน้า) · ดูได้ถึง ${thDate(exp)}</div>`:""}`}
 
@@ -101,5 +104,15 @@ function record(D,o){o=o||{};const S=SETS[D.set]||{name:"—",th:""},m=D.measure
    <div class="disc">ตัวเลขในใบนี้เป็นค่าที่วัดได้จริงเท่านั้น ค่าที่ไม่ได้วัดจะเขียนว่า "ไม่ได้วัด" · ไม่ใช่เครื่องมือแพทย์ · ขอลบข้อมูลได้ภายใน 30 วันที่บูธหรือผ่านทีมงาน</div>
   </div>`}
 
-window.RV={SETS,card,record,qrSvg,barcode,esc,thDate};
+/* บันทึกคลิป: มือถือที่แชร์ไฟล์ได้ → เปิดเมนูแชร์ (บันทึกลงรูปภาพ/ส่ง IG ได้) · ที่เหลือ → ดาวน์โหลดไฟล์ mp4 ตรงๆ */
+async function saveClip(a,ev){
+  if(!(navigator.share&&navigator.canShare))return true;
+  ev.preventDefault();const old=a.textContent;a.textContent="กำลังเตรียมคลิป…";
+  try{const blob=await (await fetch(a.dataset.clip)).blob(),f=new File([blob],a.dataset.name,{type:"video/mp4"});
+    if(navigator.canShare({files:[f]}))await navigator.share({files:[f],title:"SENSORY DE-FREQ"});else location.href=a.href}
+  catch(e){if(e&&e.name!=="AbortError")location.href=a.href}
+  finally{a.textContent=old}
+  return false}
+
+window.RV={SETS,card,record,qrSvg,barcode,esc,thDate,saveClip};
 })();
