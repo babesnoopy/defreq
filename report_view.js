@@ -86,7 +86,7 @@ function calmGraph(c){
   c.forEach((v,k)=>{if(v==null){if(cur.length)segs.push(cur);cur=[]}else cur.push(`${(k/(n-1)*100).toFixed(1)},${(100-v*90-5).toFixed(1)}`)});if(cur.length)segs.push(cur);
   return `<div class="mug"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${segs.map(s=>`<polyline points="${s.join(" ")}" fill="none" stroke="#121212" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`).join("")}</svg><div class="ticks">${[100,80,60,40,20,0].map(v=>`<span>${v}</span>`).join("")}</div></div>`}
 
-function card(D,o){o=o||{};const S=D.set?SETS[D.set]:null,m=D.measured,waiting=D.status!=="done";
+function card(D,o){o=o||{};const S=D.set?SETS[D.set]:null,m=D.measured,waiting=!/^(done|aborted)$/.test(D.status);
   return `<div class="lanyard"><div class="strap"></div><div class="hook"></div><div class="card"><div class="slot"></div>
    <div class="foil"></div><div class="lockup">UNSENSORY RESEARCH LAB</div><div class="big" style="margin-top:6px">SENSORY<br>DE-FREQ</div><div class="th">PATIENT PASS · บัตรผู้รับบริการ</div>
    <dl><dt>ชื่อ</dt><dd>${esc(D.nick)}</dd><dt>HN</dt><dd style="font:500 16px var(--m);color:var(--ink);padding-top:6px">${esc(D.hn||"—")}</dd><dt>เตียง / รอบ</dt><dd>${D.bed} · ${esc((D.round||"").slice(2))}</dd><dt>เซ็ต</dt><dd${S?"":` style="color:var(--pencil)"`}>${S?S.name:"รอสรุปรอบ"}</dd></dl>

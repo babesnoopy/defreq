@@ -222,7 +222,7 @@ function cardHtml(i){const p=R.beds[i],D=dataFor(i),qr=LIVE&&p.url?RV.qrSvg(p.ur
    <button class="close" id="ovx">ปิด</button>`}
 function reportHtml(i){const p=R.beds[i];let D=dataFor(i);
   if(!LIVE)D={...D,status:"done",measured:demoMeasured(),set:D.set||"relax"};
-  const note=!LIVE?`<p style="color:#ddd;font-size:13px;margin:0 0 10px">โหมดตัวอย่าง · ตัวเลขในใบนี้เป็นค่าสมมุติ</p>`:D.status!=="done"?`<p style="color:#ddd;font-size:13px;margin:0 0 10px">ยังไม่จบรอบ · ค่าที่วัดจะขึ้นเองหลังจบรอบที่หน้า Control</p>`:"";
+  const note=!LIVE?`<p style="color:#ddd;font-size:13px;margin:0 0 10px">โหมดตัวอย่าง · ตัวเลขในใบนี้เป็นค่าสมมุติ</p>`:!/^(done|aborted)$/.test(D.status)?`<p style="color:#ddd;font-size:13px;margin:0 0 10px">ยังไม่จบรอบ · ค่าที่วัดจะขึ้นเองหลังจบรอบที่หน้า Control</p>`:"";
   return `${note}<div class="phone">${RV.record(D,{url:LIVE?p.url:""})}</div>${LIVE&&p.url?`<p style="color:#bbb;font:12px var(--m);margin-top:10px;word-break:break-all;max-width:380px;text-align:center">${RV.esc(p.url)}</p>`:""}<button class="close" id="ovx">ปิด</button>`}
 
 /* ── ต่อกับเครื่อง PC ── เปิดจาก PC (http://<ip>:8780/intake) = โหมดจริง · เปิดไฟล์เดี่ยว = โหมดตัวอย่าง */

@@ -55,7 +55,7 @@ async function load(){if(T.length<20)return null;
   try{return await fromBooth()}catch(e){return null}}
 function render(){const app=$("#app");
   if(!D){app.innerHTML=`<p class="msg"><b>ไม่พบใบตรวจ</b>ลิงก์อาจพิมพ์ไม่ครบ หรือหมดอายุแล้ว (เก็บไว้ 30 วัน) · ถ้ายังอยู่ในงาน ถามทีมที่บูธได้เลย</p>`;return}
-  const done=D.status==="done";if(!view)view=done?"record":"card";
+  const done=/^(done|aborted)$/.test(D.status);if(!view)view=done?"record":"card";
   const tabs=done?`<div class="tabs"><button data-v="record" class="${view==="record"?"on":""}">ใบตรวจ</button><button data-v="card" class="${view==="card"?"on":""}">บัตร</button></div>`:"";
   const body=view==="record"?`<div class="paper">${RV.record(D,{url:location.href})}</div>`:RV.card(D);
   const msg=done?"":D.status==="running"?`<p class="msg"><b>กำลังเก็บลายพิมพ์</b>ใบตรวจจะขึ้นที่ลิงก์นี้เองหลังจบรอบ ไม่ต้องสแกนใหม่</p>`
@@ -89,7 +89,7 @@ function bindPost(){const w=$("#pword");if(!w)return;
     catch(err){PERR="ส่งไม่สำเร็จ ลองอีกครั้ง"}
     render()}}
 (async()=>{D=await load();render();
-  if(D&&D.status!=="done")setInterval(async()=>{if(document.hidden)return;const d=await load();if(d&&d.status!==D.status){D=d;view=null;render()}},20000)})();
+  if(D&&!/^(done|aborted)$/.test(D.status))setInterval(async()=>{if(document.hidden)return;const d=await load();if(d&&d.status!==D.status){D=d;view=null;render()}},20000)})();
 </script>
 </body>
 </html>
