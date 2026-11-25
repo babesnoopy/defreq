@@ -1,14 +1,14 @@
 /* UNSENSORY RESEARCH LAB · SENSORY DE-FREQ
    วาดบัตรผู้รับบริการ + ใบตรวจ จากข้อมูลจริงของเครื่อง PC (engine/intake_api.py → report())
    ใช้ร่วม 2 ที่: แฟ้มคัดกรองบน iPad (intake.html) และหน้าใบตรวจบนมือถือ (report.html)
-   กติกา: ค่าไหนเป็น null = ไม่ได้วัด → เขียนว่า "ไม่ได้วัด" เสมอ ไม่เดา ไม่เติมเลขตัวอย่าง */
+   กติกา (25 พ.ย. ตามผู้ใช้): ค่าไหนเป็น null = ไม่ได้วัด → "ซ่อนแถว/ช่องนั้นไปเลย" ไม่เขียน "ไม่ได้วัด" ไม่ปล่อยโล่ง
+         ห้ามเดา ห้ามเติมเลขตัวอย่าง · กราฟหลัก: มีคลื่นสมอง = ความนิ่งของสมอง · ไม่มี = จังหวะหัวใจ (ป้ายบอกตามจริง) */
 (function(){
 const SETS={baseline:{name:"BASELINE",th:"ตั้งศูนย์"},boost:{name:"BOOST",th:"ปลุกพลัง"},relax:{name:"RELAX",th:"ปล่อยวาง"}};
 const COLOUR={baseline:"ฟ้า",boost:"ชมพูแดง",relax:"ฟ้าอมเขียว"};
 const ROUTINE={relax:"เสียงต่ำช้าๆ 10 นาทีก่อนนอน",boost:"เดินกลางแดดอ่อน 10 นาที",baseline:"มองจุดเดียวนิ่งๆ 1 นาที"};
 const SOUND={relax:"เสียงต่ำ ช้า ยาว",boost:"จังหวะที่เร็วขึ้นทีละนิด",baseline:"เสียงเรียบ นิ่ง"};
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const NA=`<span class="na">ไม่ได้วัด</span>`;
 const thDate=iso=>{const d=iso?new Date(iso):new Date();return d.toLocaleDateString("th-TH",{day:"2-digit",month:"2-digit",year:"numeric"})};
 
 function qrSvg(text,px){
@@ -39,9 +39,18 @@ function blinkPrint(ts,dur){ // จังหวะกระพริบตาต
   for(let r=0;r<5;r++)d+=`<line x1="0" x2="100" y1="${14+r*18}" y2="${14+r*18}" stroke="#BDBFC2" stroke-width=".6"/>`;
   ts.forEach((t,i)=>{const r=Math.min(4,Math.floor(t/row)),x=(t-r*row)/row*98+1;d+=`<rect x="${x.toFixed(1)}" y="${(14+r*18-6).toFixed(1)}" width="1.6" height="${8+(i%3)*2}" fill="#121212"/>`});
   return `<svg viewBox="0 0 100 100">${d}</svg>`}
-function prints(m,waiting){
-  const P=(m&&m.prints)||{},box=(svg,label)=>`<div>${svg||(waiting?`${label}<br>รอเก็บ`:`${label}<br>ไม่ได้วัด`)}</div>`;
-  return `<div class="prints">${box(P.brain&&P.brain.length>8?brainPrint(P.brain):"","ลายสมอง")}${box(P.heart&&P.heart.length>8?heartPrint(P.heart):"","ลายหัวใจ")}${box(P.blink&&P.blink.length?blinkPrint(P.blink,m.duration_s):"","ลายกระพริบ")}</div>`}
+// ลายพิมพ์: ระหว่างรอนอน = กรอบ "รอเก็บ" ครบ 3 ช่อง · จบรอบแล้ว = แสดงเฉพาะลายที่วัดได้จริง (ไม่มีช่องว่าง)
+function printList(m,waiting){
+  const P=(m&&m.prints)||{},L=[];
+  if(waiting)return [["","ลายสมอง"],["","ลายหัวใจ"],["","ลายกระพริบ"]].map(([_,l])=>[`<div>${l}<br>รอเก็บ</div>`,l]);
+  if(P.brain&&P.brain.length>8)L.push([`<div>${brainPrint(P.brain)}</div>`,"สมอง"]);
+  if(P.heart&&P.heart.length>8)L.push([`<div>${heartPrint(P.heart)}</div>`,"หัวใจ"]);
+  if(P.blink&&P.blink.length)L.push([`<div>${blinkPrint(P.blink,m.duration_s)}</div>`,"กระพริบตา"]);
+  return L}
+function prints(m,waiting,withFoot){
+  const L=printList(m,waiting);if(!L.length)return "";
+  const cols=`style="grid-template-columns:repeat(${L.length},minmax(0,${L.length<3?"32%":"1fr"}));justify-content:center"`;
+  return `<div class="prints" ${cols}>${L.map(x=>x[0]).join("")}</div>`+(withFoot?`<div class="cardfoot" ${cols.replace("grid-template-columns","display:grid;grid-template-columns")}>${L.map(x=>`<span style="text-align:center">${x[1]}</span>`).join("")}</div>`:"")}
 
 /* ── คลิปภาพ+เสียง 15 วิ จากรอบของคนนี้ (ช่วงที่เลือกจากกราฟของเขาเอง · engine/clip_pick.py) ──
    ไม่มี clip = ไม่แสดงหัวข้อนี้ · ยังไม่มี url = กำลังอัป · เกินวันหมดอายุ = บอกว่าหมดอายุ (cloud ลบแล้ว) */
@@ -59,9 +68,20 @@ function clipBox(c){
    <div class="kicker" style="text-align:center;margin-top:6px">${esc(c.why||"")}</div>
    ${ok&&exp?`<div class="disc" style="text-align:center;margin-top:2px">ภาพและเสียงที่สร้างจากร่างกายในรอบนี้ (ไม่มีภาพใบหน้า) · ดูได้ถึง ${thDate(exp)}</div>`:""}`}
 
-/* ── กราฟความนิ่ง (ช่วงที่วัดไม่ได้ = เว้นเส้น) ── */
+/* ── กราฟหลัก: ความนิ่งของสมอง (ช่วงที่วัดไม่ได้ = เว้นเส้น) · ไม่มีคลื่นสมอง → จังหวะหัวใจจากค่าจริง ── */
+function hasCalm(c){return !!(c&&c.filter(v=>v!=null).length>=5)}
+function heartGraph(ibi){ // ชีพจรทีละครั้งตลอดรอบ (bpm = 60000/ibi) เกลี่ยเบาๆ 5 ครั้ง
+  const b=ibi.filter(v=>v>300&&v<2000).map(v=>60000/v);if(b.length<8)return "";
+  const sm=b.map((_,i)=>{const w=b.slice(Math.max(0,i-2),i+3);return w.reduce((a,c)=>a+c,0)/w.length});
+  const lo=Math.floor(Math.min(...sm)/5)*5-5,hi=Math.ceil(Math.max(...sm)/5)*5+5,n=sm.length;
+  const pts=sm.map((v,k)=>`${(k/(n-1)*100).toFixed(1)},${(100-(v-lo)/(hi-lo)*90-5).toFixed(1)}`).join(" ");
+  const tk=[0,1,2,3,4,5].map(i=>Math.round(hi-(hi-lo)*i/5));
+  return `<div class="mug"><svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#121212" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg><div class="ticks">${tk.map(v=>`<span>${v}</span>`).join("")}</div></div>`}
+function mainGraph(m){
+  if(hasCalm(m.calm))return [calmGraph(m.calm),"ความนิ่งของสมองตลอดรอบ (%)"];
+  const P=m.prints||{},h=P.heart&&P.heart.length>8?heartGraph(P.heart):"";
+  return h?[h,"จังหวะหัวใจตลอดรอบ (ครั้ง/นาที)"]:["",""]}
 function calmGraph(c){
-  if(!c||c.filter(v=>v!=null).length<5)return `<div class="mug" style="display:grid;place-items:center">${NA}</div>`;
   const n=c.length,segs=[];let cur=[];
   c.forEach((v,k)=>{if(v==null){if(cur.length)segs.push(cur);cur=[]}else cur.push(`${(k/(n-1)*100).toFixed(1)},${(100-v*90-5).toFixed(1)}`)});if(cur.length)segs.push(cur);
   return `<div class="mug"><svg viewBox="0 0 100 100" preserveAspectRatio="none">${segs.map(s=>`<polyline points="${s.join(" ")}" fill="none" stroke="#121212" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`).join("")}</svg><div class="ticks">${[100,80,60,40,20,0].map(v=>`<span>${v}</span>`).join("")}</div></div>`}
@@ -70,38 +90,36 @@ function card(D,o){o=o||{};const S=D.set?SETS[D.set]:null,m=D.measured,waiting=D
   return `<div class="lanyard"><div class="strap"></div><div class="hook"></div><div class="card"><div class="slot"></div>
    <div class="foil"></div><div class="lockup">UNSENSORY RESEARCH LAB</div><div class="big" style="margin-top:6px">SENSORY<br>DE-FREQ</div><div class="th">PATIENT PASS · บัตรผู้รับบริการ</div>
    <dl><dt>ชื่อ</dt><dd>${esc(D.nick)}</dd><dt>HN</dt><dd style="font:500 16px var(--m);color:var(--ink);padding-top:6px">${esc(D.hn||"—")}</dd><dt>เตียง / รอบ</dt><dd>${D.bed} · ${esc((D.round||"").slice(2))}</dd><dt>เซ็ต</dt><dd${S?"":` style="color:var(--pencil)"`}>${S?S.name:"รอสรุปรอบ"}</dd></dl>
-   ${prints(m,waiting)}
+   ${prints(m,waiting,false)}
    ${barcode(D.code||"")}<div class="cardfoot"><span>${esc(D.code)}</span><span>${waiting?"ลายพิมพ์จะถูกเก็บระหว่างนอน":"เก็บลายพิมพ์แล้ว "+thDate(D.date)}</span></div></div></div>`}
 
 function record(D,o){o=o||{};const S=SETS[D.set]||{name:"—",th:""},m=D.measured||{},b=D.before||{},p=D.post||null;
   const mono=v=>`<dd style="font:500 13px var(--m);color:var(--ink);padding-top:5px;text-align:right">${v}</dd>`,
-        val=(ok,v)=>ok?mono(v):`<dd style="padding-top:5px;text-align:right">${NA}</dd>`;
-  const d=p&&b.stress&&p.stress?b.stress-p.stress:null,
-        overall=d==null?`<span class="na">รอบันทึกหลังจบรอบ</span>`:d>0?`คลายลง ${d} ระดับ`:d<0?`ตื่นตัวขึ้น ${-d} ระดับ`:"นิ่งเท่าเดิม";
+        row=(ok,label,v)=>ok?`<dt>${label}</dt>${mono(v)}`:"";          // ไม่ได้วัด = ไม่แสดงแถวนั้น
+  const d=p&&b.stress&&p.stress?b.stress-p.stress:null,mins=m.duration_s?Math.round(m.duration_s/60):0,
+        overall=d!=null?(d>0?`คลายลง ${d} ระดับ`:d<0?`ตื่นตัวขึ้น ${-d} ระดับ`:"นิ่งเท่าเดิม"):mins?`พักครบ ${mins} นาที`:"";
+  const vit=[row(m.bpm,"ชีพจรเฉลี่ย / ต่ำสุด / สูงสุด",m.bpm&&`${m.bpm.avg} / ${m.bpm.min} / ${m.bpm.max} bpm`),
+        row(m.alpha_hz,"คลื่นอัลฟาประจำตัว",`${m.alpha_hz} Hz`),row(m.synced!=null&&m.synced>0,"นิ่งพร้อมเพื่อนร่วมรอบ",`${m.synced} ครั้ง`),
+        row(m.blinks!=null,"กระพริบตา",`${m.blinks} ครั้ง`),row(m.hrv_rmssd,"HRV (RMSSD)",`${m.hrv_rmssd} ms`)].join("");
+  const [graph,gLabel]=mainGraph(m),pr=prints(m,false,true);
   return `<div class="rec">
    <div class="lockup">UNSENSORY RESEARCH LAB</div><div class="num" style="margin-top:4px">SENSORY DE-FREQ · ${esc(D.code)} · ใบตรวจ</div><div class="big" style="margin-top:6px">NEURO-SENSORY<br>RECORD</div>
    <div class="grid"><dl><dt>ชื่อ</dt><dd>${esc(D.nick)}</dd><dt>HN</dt><dd style="font:500 13px var(--m);color:var(--ink);padding-top:5px">${esc(D.hn||"—")}</dd><dt>อายุ</dt><dd>${esc(D.age)}</dd><dt>เซ็ต</dt><dd>${S.name}</dd><dt>อาการที่มา</dt><dd style="font-size:15px">${esc((D.came_for||[]).join(", ")||"กำลังดี")}</dd></dl>
-    ${calmGraph(m.calm)}</div>
-   <div class="kicker" style="margin-top:4px;text-align:right">ความนิ่งของสมองตลอดรอบ (%)</div>
-   <h5>สัญญาณชีพ · วัดจริงระหว่างรอบ</h5>
-   <dl style="grid-template-columns:1fr auto"><dt>ชีพจรเฉลี่ย / ต่ำสุด / สูงสุด</dt>${val(m.bpm,m.bpm&&`${m.bpm.avg} / ${m.bpm.min} / ${m.bpm.max} bpm`)}
-    <dt>คลื่นอัลฟาประจำตัว</dt>${val(m.alpha_hz,`${m.alpha_hz} Hz`)}
-    <dt>นิ่งพร้อมเพื่อนร่วมรอบ</dt>${val(m.synced!=null,`${m.synced} ครั้ง`)}
-    <dt>กระพริบตา</dt>${val(m.blinks!=null,`${m.blinks} ครั้ง`)}
-    <dt>HRV (RMSSD)</dt>${val(m.hrv_rmssd,`${m.hrv_rmssd} ms`)}</dl>
+    ${graph}</div>
+   ${gLabel?`<div class="kicker" style="margin-top:4px;text-align:right">${gLabel}</div>`:""}
+   ${vit?`<h5>สัญญาณชีพ · วัดจริงระหว่างรอบ</h5><dl style="grid-template-columns:1fr auto">${vit}</dl>`:""}
    ${clipBox(m.clip)}
-   <h5>ลายพิมพ์</h5>${prints(m,false)}
-   <div class="cardfoot"><span>สมอง</span><span>หัวใจ</span><span>กระพริบตา</span></div>
+   ${pr?`<h5>ลายพิมพ์</h5>${pr}`:""}
    <div class="rx"><h6>ใบสั่งยา</h6>
-    <div class="row2"><b>MOOD THERAPY</b><span>${p&&p.word?esc(p.word):`<span class="na">ไม่ได้บันทึก</span>`}</span></div>
+    ${p&&p.word?`<div class="row2"><b>MOOD THERAPY</b><span>${esc(p.word)}</span></div>`:""}
     <div class="row2"><b>SOUND THERAPY</b><span>${m.alpha_hz?`อัลฟา ${m.alpha_hz} Hz`:SOUND[D.set]||"—"}</span></div>
     <div class="row2"><b>COLOUR THERAPY</b><span>${COLOUR[D.set]||"—"}</span></div>
     <div class="row2"><b>ROUTINE</b><span style="font-size:14px;text-align:right;max-width:200px">${ROUTINE[D.set]||"—"}</span></div>
-    <div class="row2"><b>OVERALL DIAGNOSIS</b><span>${overall}</span></div>
+    ${overall?`<div class="row2"><b>OVERALL DIAGNOSIS</b><span>${overall}</span></div>`:""}
     <div class="claim">ไม่ใช่ยา ไม่ใช่การวินิจฉัย เป็นส่วนหนึ่งของงานศิลปะ</div></div>
    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:14px"><span class="stamp ok" style="font-size:15px">ตรวจแล้ว ${thDate(D.date)}</span>${o.url?qrSvg(o.url,64):""}</div>
    ${barcode(D.code||"")}
-   <div class="disc">ตัวเลขในใบนี้เป็นค่าที่วัดได้จริงเท่านั้น ค่าที่ไม่ได้วัดจะเขียนว่า "ไม่ได้วัด" · ไม่ใช่เครื่องมือแพทย์ · ขอลบข้อมูลได้ภายใน 30 วันที่บูธหรือผ่านทีมงาน</div>
+   <div class="disc">ใบนี้แสดงเฉพาะค่าที่วัดได้จริงในรอบของคุณ · ไม่ใช่เครื่องมือแพทย์ · ขอลบข้อมูลได้ภายใน 30 วันที่บูธหรือผ่านทีมงาน</div>
   </div>`}
 
 /* บันทึกคลิป: มือถือที่แชร์ไฟล์ได้ → เปิดเมนูแชร์ (บันทึกลงรูปภาพ/ส่ง IG ได้) · ที่เหลือ → ดาวน์โหลดไฟล์ mp4 ตรงๆ */
