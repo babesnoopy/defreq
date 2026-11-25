@@ -55,7 +55,7 @@ function prints(m,waiting,withFoot){
 /* ── คลิปภาพ+เสียง 15 วิ จากรอบของคนนี้ (ช่วงที่เลือกจากกราฟของเขาเอง · engine/clip_pick.py) ──
    ไม่มี clip = ไม่แสดงหัวข้อนี้ · ยังไม่มี url = กำลังอัป · เกินวันหมดอายุ = บอกว่าหมดอายุ (cloud ลบแล้ว) */
 function clipBox(c){
-  if(!c)return "";
+  if(!c||(!c.url&&!c.file))return "";        // รอบที่กดหยุด/ยังไม่ได้ตัดคลิป = ไม่มีไฟล์ → ไม่แสดงหัวข้อคลิปเลย
   const today=new Date().toISOString().slice(0,10),exp=c.expires||"";
   const ok=typeof c.url==="string"&&/^https:\/\//.test(c.url)&&!(exp&&exp<today);
   const body=ok
