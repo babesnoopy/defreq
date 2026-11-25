@@ -129,7 +129,8 @@ async function poll(){clearTimeout(timer);const c=store.get();if(!c)return;
   try{const d=await rpc("self_status",{p_claim:c.claim});if(d){S={...d,nick:d.nick||c.nick};draw()}}catch(e){}
   if(S&&S.status==="pending")timer=setTimeout(poll,4000)}
 document.documentElement.lang=LANG;document.title=T("SENSORY DE-FREQ · แบบคัดกรอง","SENSORY DE-FREQ · Screening");
-(async()=>{const c=store.get();if(c){S={status:"pending",nick:c.nick};draw();await poll()}else draw()})();
+(async()=>{if(new URLSearchParams(location.search).has("new")){store.set(null);history.replaceState(null,"",location.pathname+"?bed="+BED)}   // ?new=1 = เริ่มกรอกใหม่ (คนที่เคยเล่นแล้วอยากเล่นอีก)
+  const c=store.get();if(c){S={status:"pending",nick:c.nick};draw();await poll()}else draw()})();
 </script>
 </body>
 </html>
