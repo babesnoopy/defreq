@@ -34,5 +34,22 @@ function fit(p){ // คะแนนความเหมาะของแต่
 // ข้อมูลที่ส่งเข้าระบบ (เหมือนกันทั้ง iPad และมือถือ) · ไม่มีคำตอบความปลอดภัยรายข้อ
 function payload(p){const tr=triage(p);return {nick:p.nick,age:p.age,consent:p.consent,triage:tr.lvl,notes:tr.notes,fit:fit(p),
   checkin:{energy:p.energy,stress:p.stress,busy:p.busy,sleepy:p.sleepy},gimmick:{mood:p.mood,weather:p.weather,want:p.want}}}
-window.IC={SAFETY,MOOD,WEATHER,WANT,CONSENT,blank,triage,fit,payload};
+// ภาษาอังกฤษสำหรับหน้าที่ผู้เข้าร่วมเห็น (self.html) · ค่าที่ส่งเข้าระบบยังเป็นคีย์/คำไทยเดิม ทีมบน iPad เห็นภาษาไทยเหมือนเดิม
+const EN={
+ safety:{seizure:["Have you ever had a seizure, or are you sensitive to flashing light?","Including epilepsy that is under control"],
+  implant:["Do you have a pacemaker or any implanted device?","e.g. pacemaker, cochlear implant"],
+  pregnant:["Are you pregnant?",""],
+  migraine:["Do you get migraines, dizziness or motion sickness easily?",""],
+  skin:["Do you have sensitive skin or an allergy to adhesive tape?",""],
+  space:["Are you afraid of small spaces or the dark?",""],
+  alcohol:["Have you had alcohol in the last 6 hours?",""],
+  sound:["Are you sensitive to loud sound?",""]},
+ mood:{"งานถาโถม":"Swamped with work","นอนไม่พอ":"Not enough sleep","ตื่นเต้นกับบางอย่าง":"Excited about something","ใจลอย":"Mind wandering",
+  "เบื่อๆ":"A bit bored","อยากหนีไปทะเล":"Want to run off to the sea","กำลังดี":"Doing fine","คิดเยอะ":"Overthinking"},
+ weather:{sun:"Bright sun",cloud:"Overcast",drizzle:"Drizzle",storm:"Storm",fog:"Fog"},
+ want:{rest:"Rest",energy:"Energy",self:"Time with myself"},
+ consent:{sensor:"<b>Wear sensors</b> on the forehead and behind the ear · you can remove them at any time · required",
+  data:"<b>Keep data for your report</b> for 30 days · never sold or shared · you can ask us to delete it · your report includes a 15-second video and sound clip from your session (no faces, viewable for 14 days) · required",
+  photo:"We may take photos of the atmosphere · optional"}};
+window.IC={SAFETY,MOOD,WEATHER,WANT,CONSENT,EN,blank,triage,fit,payload};
 })();
