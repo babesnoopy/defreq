@@ -20,9 +20,9 @@ const CONSENT=[["sensor","<b>ติดเซนเซอร์</b> ขั้ว�
  ["photo","ถ่ายรูปบรรยากาศได้ · ไม่บังคับ"]];
 const blank=()=>({step:0,nick:"",email:"",age:"",consent:{sensor:false,data:false,photo:false,email:false},safety:{},energy:0,stress:0,busy:0,sleepy:0,sleep:"",caffeine:"",mood:[],weather:"",want:"",post:{energy:0,stress:0,busy:0,word:""}});
 
-// ทีมคุยแล้วรับเข้าเตียงได้ (เคส stop ยกเว้นลมชัก/ไวต่อแสงกะพริบ) → warn + โน้ต · ฝั่ง cloud ใช้กติกาเดียวกันใน staff_accept (007)
+// ทีมคุยแล้วรับเข้าเตียงได้ (ทุกเคส stop · 008) → warn + โน้ต · ฝั่ง cloud ใช้กติกาเดียวกันใน staff_accept (007)
 const OVR_NOTES=["ทีมคุยแล้ว รับเข้าเตียง (ระบบแนะนำว่าไม่ควรนอน)","ลดแสงกะพริบ · ไม่แนะนำ BOOST"];
-const canOverride=tr=>tr.lvl==="stop"&&!tr.notes.some(n=>n.includes("แสงกะพริบ"));
+const canOverride=tr=>tr.lvl==="stop";   // 008: ผู้ใช้ให้ทีมรับได้ทุกเคส รวมเคสแสงกะพริบ/ลมชัก
 function triage(p){const t=triage0(p);return p._ovr&&canOverride(t)?{lvl:"warn",notes:[...OVR_NOTES,...t.notes]}:t}
 function triage0(p){if(p._tri&&!Object.keys(p.safety).length)return {lvl:p._tri,notes:p._notes||[]};const on=SAFETY.filter(q=>p.safety[q.k]);if(on.some(q=>q.lvl==="stop"))return {lvl:"stop",notes:on.map(q=>q.note)};
   if(SAFETY.some(q=>p.safety[q.k]===undefined))return {lvl:null,notes:[]};return {lvl:on.length?"warn":"ok",notes:on.map(q=>q.note)}}
