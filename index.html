@@ -96,6 +96,10 @@ button,input{font:inherit;color:inherit}button{cursor:pointer}
 .case{background:var(--paper);border-radius:6px;padding:14px 16px;width:min(560px,92vw);margin-bottom:10px}
 .case .hd{display:flex;align-items:center;gap:12px}.case .hd b{font:700 20px var(--h)}.case .hd small{color:var(--pencil);font:12px var(--m)}
 .case ul{margin:8px 0 0;padding-left:18px;font-size:14px}
+.case .ph{display:inline-block;margin-top:8px;padding:4px 10px;font:700 13px var(--h);border:1.5px solid var(--ink);border-radius:2px}
+.case .ph.no{background:#c4302b;border-color:#c4302b;color:#fff}
+.case .ovr{margin:8px 0 0;font-size:13px;font-weight:700}
+.phbad{display:inline-block;margin-left:10px;padding:2px 8px;font:700 12px var(--h);background:#c4302b;color:#fff;border-radius:2px;vertical-align:middle}
 .case .act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
 .case .act button{border:1px solid var(--ink);background:#fff;color:var(--ink);border-radius:2px;padding:8px 12px;font:700 14px var(--h)}
 .case .act button.pri{background:var(--ink);color:var(--paper)}.case .act button[disabled]{opacity:.35}
@@ -174,10 +178,11 @@ function secBody(p,i){
   return `<div style="display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap"><div class="stamp ${tr.lvl}">${lab}</div>
    <div style="flex:1;min-width:280px">${tr.notes.length?`<b>สิ่งที่ต้องปรับ</b><ul class="notes">${tr.notes.map(n=>`<li>${n}</li>`).join("")}</ul>`:`<b>ไม่มีข้อห้าม</b> ร่วมได้ตามปกติ`}
    ${f&&tr.lvl!=="stop"?`<div style="margin-top:14px"><b>เหมาะกับเซ็ตไหน</b><div class="fit" style="margin-top:6px">${Object.keys(SETS).map(k=>`<span>${SETS[k].name}</span><i><b style="width:${f[k]}%;background:${SETS[k].color}"></b></i><span>${f[k]}%</span>`).join("")}</div></div>`:""}</div></div>
+   ${tr.lvl==="stop"?(IC.canOverride(tr)?`<div class="nav" style="justify-content:flex-start;padding-top:18px;align-items:center;gap:14px"><span class="notes" style="padding:0">คุยกับผู้เข้าร่วมก่อน · ถ้าทีมตัดสินใจให้นอนได้</span><button class="btn" id="ovr">ทีมคุยแล้ว · รับเข้าเตียง ${R.tab}</button></div>`:`<p class="notes" style="padding-top:18px">เคสไวต่อแสงกะพริบ/ลมชัก รับเข้าห้องไม่ได้ · ชวนดูจากด้านนอก</p>`):""}
    ${tr.lvl!=="stop"?`<div class="nav" style="justify-content:flex-start;padding-top:18px;align-items:center;gap:14px">${p._err?`<span class="notes">${p._err}</span><button class="btn" id="resend">ส่งอีกครั้ง</button>`:`<button class="btn pri" id="card" ${LIVE&&!p.url?"disabled":""}>${LIVE&&!p.url?"กำลังส่งเข้าเครื่อง PC…":"ออกบัตรผู้รับบริการ"}</button>`}</div>`:""}`}
 function intakeSheet(){const i=R.tab-1,p=R.beds[i],bed=i+1;
   const head=`<div class="clip"></div><span class="cross tr"></span>
-   <div class="head"><div><div class="lockup">UNSENSORY RESEARCH LAB <span>/ SENSORY DE-FREQ</span></div><div class="kicker" style="margin-top:4px">แฟ้มคัดกรอง / รอบ ${R.id.slice(2)}</div><div class="title">เตียง ${bed}${p.nick?`<span class="hand">${p.nick}</span>`:""}</div></div>
+   <div class="head"><div><div class="lockup">UNSENSORY RESEARCH LAB <span>/ SENSORY DE-FREQ</span></div><div class="kicker" style="margin-top:4px">แฟ้มคัดกรอง / รอบ ${R.id.slice(2)}</div><div class="title">เตียง ${bed}${p.nick?`<span class="hand">${p.nick}</span>`:""}${p.nick&&!p.consent.photo?`<span class="phbad">ห้ามถ่ายรูป</span>`:""}</div></div>
    <div class="regno">HN ${hn(i)}<br>${R.id}-B${bed}</div></div><div class="sub">สิ่งที่ต้องรู้ก่อนพาขึ้นเตียง · ใช้เวลาประมาณ 2 นาที</div>`;
   const foot=`<div class="foot"><div>เลขทะเบียน<b>${R.id}-B${bed}</b></div><div>ผู้คัดกรอง<b>Unsensory Team</b></div><div>วันที่<b>${TH_DATE()}</b></div></div>`;
   if(!p._start&&!p.nick&&!p.step)return head+`<div class="empty"><div class="hand">เตียงนี้ยังว่าง</div><p>เปิดแฟ้มใหม่เมื่อผู้ร่วมมาถึงบูธ</p><button class="btn pri" id="start">เปิดแฟ้มเตียง ${bed}</button></div>`+foot;
@@ -189,7 +194,7 @@ function summarySheet(){const rp=roundPick();
    <div class="head"><div><div class="lockup">UNSENSORY RESEARCH LAB <span>/ SENSORY DE-FREQ</span></div><div class="kicker" style="margin-top:4px">ใบสรุปรอบ</div><div class="title">รอบ ${R.id.slice(2)}</div></div><div class="regno">${R.beds.filter(p=>fit(p)).length} / 3 เตียงคัดกรองแล้ว</div></div>
    <div class="sub">ระบบรวมความต้องการของทุกคนในรอบ แล้วเลือกเซ็ตเดียวให้ทั้งห้อง</div>
    ${R.beds.map((p,i)=>{const tr=triage(p),f=fit(p),b=f?Object.keys(f).sort((a,c)=>f[c]-f[a])[0]:null;
-     return `<div class="bedline"><span class="no">0${i+1}</span><span class="nm">${p.nick||"—"}</span><span>${tr.lvl?`<span class="stamp ${tr.lvl}" style="font-size:14px;padding:3px 8px">${{ok:"ผ่าน",warn:"มีเงื่อนไข",stop:"ร่วมไม่ได้"}[tr.lvl]}</span>`:`<span class="kicker">ยังไม่คัดกรอง</span>`}</span><span class="kicker">${b&&tr.lvl!=="stop"?`เหมาะกับ ${SETS[b].name} ${f[b]}%`:""}</span></div>`}).join("")}
+     return `<div class="bedline"><span class="no">0${i+1}</span><span class="nm">${p.nick||"—"}${p.nick&&!p.consent.photo?`<span class="phbad">ห้ามถ่ายรูป</span>`:""}</span><span>${tr.lvl?`<span class="stamp ${tr.lvl}" style="font-size:14px;padding:3px 8px">${{ok:"ผ่าน",warn:"มีเงื่อนไข",stop:"ร่วมไม่ได้"}[tr.lvl]}</span>`:`<span class="kicker">ยังไม่คัดกรอง</span>`}</span><span class="kicker">${b&&tr.lvl!=="stop"?`เหมาะกับ ${SETS[b].name} ${f[b]}%`:""}</span></div>`}).join("")}
    ${rp?`<div class="verdictbig"><span class="set" style="color:${SETS[rp.pick].hex}">${SETS[rp.pick].name}</span><div><div style="font:700 20px var(--h)">${SETS[rp.pick].th}</div><div class="notes" style="padding:0;list-style:none">${rp.why}</div></div></div>
      <div class="fit">${Object.keys(SETS).map(k=>`<span>${SETS[k].name}</span><i><b style="width:${rp.sum[k]}%;background:${SETS[k].color}"></b></i><span>${rp.sum[k]}%</span>`).join("")}</div>
      ${rp.flags.length?`<p><b>ปรับทั้งรอบ:</b> <span class="notes" style="padding:0">${rp.flags.join(" · ")}</span></p>`:""}
@@ -257,7 +262,7 @@ function hydrate(S){R.server=S;if(R.id!==S.id){R.id=S.id;R.beds=[blank(),blank()
   [0,1,2].forEach(i=>{const s=S.beds[String(i+1)],p=R.beds[i];if(!s){if(p._sent)R.beds[i]=blank();return}
     if(!p._sent||p.nick!==s.nick){const ck=s.checkin||{},gm=s.gimmick||{};
       Object.assign(p,{nick:s.nick,age:s.age,step:4,max:4,_tri:s.triage,_notes:s.notes||[],_fit:s.fit,safety:{},sleep:"",caffeine:"",
-        consent:{sensor:true,data:true,photo:false},energy:ck.energy||0,stress:ck.stress||0,busy:ck.busy||0,sleepy:ck.sleepy||0,mood:gm.mood||[],weather:gm.weather||"",want:gm.want||""});
+        consent:{sensor:true,data:true,photo:!!s.photo},energy:ck.energy||0,stress:ck.stress||0,busy:ck.busy||0,sleepy:ck.sleepy||0,mood:gm.mood||[],weather:gm.weather||"",want:gm.want||""});
       if(s.post)p.post={...p.post,...s.post}}
     const nk=`defreq.notes.${S.id}.${i+1}`;if(p._notes&&p._notes.length===0){try{p._notes=JSON.parse(localStorage.getItem(nk)||"[]")}catch(e){}}
     Object.assign(p,{_sent:true,hn:s.hn,url:s.url||reportUrl(s.token),report:s.report})})}
@@ -293,6 +298,7 @@ function bind(){const i=R.tab-1,p=R.beds[i]||{};
   document.querySelectorAll("[data-cs]").forEach(b=>b.onclick=()=>{p.consent[b.dataset.cs]=!p.consent[b.dataset.cs];draw()});
   document.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{p.step=+b.dataset.st;draw()});
   const nx=$("#next");if(nx)nx.onclick=()=>{p.step++;p.max=Math.max(p.max||0,p.step);draw();if(p.step===4)sendBed(i)};
+  const ov=$("#ovr");if(ov)ov.onclick=()=>{if(!confirm(`ระบบแนะนำว่า ${p.nick||"เคสนี้"} ไม่ควรนอน:\n• ${triage({...p,_ovr:false}).notes.join("\n• ")}\n\nทีมคุยแล้วและยืนยันรับเข้าเตียง ${i+1}?`))return;p._ovr=true;draw();sendBed(i)};
   const cd=$("#card");if(cd)cd.onclick=()=>{overlay(cardHtml(i));const sv=$("#save");sv.onclick=async()=>{
     sv.disabled=true;sv.textContent="กำลังสร้างรูป…";
     try{await document.fonts.ready;const c=await html2canvas(document.querySelector(".lanyard"),{backgroundColor:null,scale:3});
@@ -309,21 +315,25 @@ function bind(){const i=R.tab-1,p=R.beds[i]||{};
 /* ── เคสจากมือถือ (QR ที่เตียง → self.html) ── รอทีมกดรับ · ใช้ได้ในโหมด cloud */
 const SELF_URL=n=>"https://babesnoopy.github.io/defreq/self.html?bed="+n;
 let INBOX=[],INBOX_OPEN=false;
-const TRI={ok:"ผ่าน",warn:"ทีมปรับให้",stop:"ร่วมนอนไม่ได้"};
+const TRI={ok:"ผ่าน",warn:"ทีมปรับให้",stop:"ต้องคุยก่อน"};
+const photoTag=ok=>ok?`<div class="ph ok">ถ่ายรูปได้</div>`:`<div class="ph no">ไม่อนุญาตให้ถ่ายรูป · ห้ามถ่ายติดคนนี้</div>`;
 function drawInbox(){if(!INBOX_OPEN)return;
   const occ=n=>{const p=R.beds[n-1];return p&&p._sent&&p.nick?p.nick:""};
   const cases=INBOX.map(c=>{const p=c.p||{},t=p.triage,mins=Math.max(0,Math.round((Date.now()-new Date(c.at))/60000));
     return `<div class="case"><div class="hd"><span class="stamp ${t}">${TRI[t]||t}</span><b>${RV.esc(p.nick||"")}</b><small>อายุ ${RV.esc(p.age||"")} · สแกนจากเตียง ${c.bed} · ${mins} นาทีก่อน</small></div>
+      ${photoTag(p.consent&&p.consent.photo)}
       ${(p.notes||[]).length?`<ul>${p.notes.map(x=>`<li>${RV.esc(x)}</li>`).join("")}</ul>`:""}
-      <div class="act">${t==="stop"?`<span style="font-size:13px">ร่วมนอนไม่ได้ · ไปคุยกับผู้เข้าร่วม แล้วกดรับทราบ (ไม่ใส่เตียง)</span><button class="pri" data-rej="${c.id}" data-ack="1">รับทราบ</button>`
-        :[1,2,3].map(n=>`<button class="${n===c.bed?"pri":""}" data-acc="${c.id}" data-bed="${n}">รับเข้าเตียง ${n}${occ(n)?" · มี "+RV.esc(occ(n))+" อยู่":""}</button>`).join("")}
-      ${t==="stop"?"":`<button data-rej="${c.id}">ไม่รับ</button>`}</div></div>`}).join("");
+      ${t==="stop"?`<p class="ovr">${IC.canOverride({lvl:t,notes:p.notes||[]})?"ระบบแนะนำว่าไม่ควรนอน · ไปคุยกับผู้เข้าร่วมก่อน แล้วทีมเลือกเองว่าจะรับเข้าเตียงหรือไม่รับ":"ไวต่อแสงกะพริบ/ลมชัก · รับเข้าห้องไม่ได้ · ไปคุยแล้วชวนดูจากด้านนอก"}</p>`:""}
+      <div class="act">${t==="stop"&&!IC.canOverride({lvl:t,notes:p.notes||[]})?`<button class="pri" data-rej="${c.id}" data-ack="1">รับทราบ (ไม่ใส่เตียง)</button>`
+        :[1,2,3].map(n=>`<button class="${n===c.bed&&t!=="stop"?"pri":""}" data-acc="${c.id}" data-bed="${n}" ${t==="stop"?'data-ovr="1"':""}>${t==="stop"?"คุยแล้ว · ":""}รับเข้าเตียง ${n}${occ(n)?" · มี "+RV.esc(occ(n))+" อยู่":""}</button>`).join("")+`<button data-rej="${c.id}">ไม่รับ</button>`}</div></div>`}).join("");
   overlay(`${cases||`<p style="color:#ddd">ยังไม่มีเคสรอรับ</p>`}<button class="close" id="ovx">ปิด</button>`);
   $("#ovx").onclick=()=>{INBOX_OPEN=false;$("#ov").innerHTML=""};
-  document.querySelectorAll("[data-acc]").forEach(b=>b.onclick=async()=>{const n=+b.dataset.bed,who=occ(n);
+  document.querySelectorAll("[data-acc]").forEach(b=>b.onclick=async()=>{const n=+b.dataset.bed,who=occ(n),ovr=!!b.dataset.ovr;
+    if(ovr){const c=INBOX.find(x=>x.id===b.dataset.acc)||{},q=c.p||{};
+      if(!confirm(`ระบบแนะนำว่า ${q.nick||"เคสนี้"} ไม่ควรนอน:\n• ${(q.notes||[]).join("\n• ")}\n\nทีมคุยแล้วและยืนยันรับเข้าเตียง ${n}?`))return}
     if(who&&!confirm(`เตียง ${n} มี ${who} อยู่แล้วในรอบนี้ · แทนที่ด้วยเคสนี้?`))return;
     document.querySelectorAll("[data-acc],[data-rej]").forEach(x=>x.disabled=true);
-    try{const S=await rpc("staff_accept",{p_id:b.dataset.acc,p_bed:n});const a=S.accepted||{};
+    try{const S=await rpc(ovr?"staff_accept_override":"staff_accept",{p_id:b.dataset.acc,p_bed:n});const a=S.accepted||{};
       try{localStorage.setItem(`defreq.notes.${S.id}.${a.bed||n}`,JSON.stringify(a.notes||[]))}catch(e){}
       R.beds[(a.bed||n)-1]=blank();hydrate(S);R.tab=a.bed||n;R.view="intake"}catch(e){alert(e.message)}
     await pollInbox();draw();drawInbox()});

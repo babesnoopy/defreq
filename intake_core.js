@@ -20,7 +20,11 @@ const CONSENT=[["sensor","<b>ติดเซนเซอร์</b> ขั้ว�
  ["photo","ถ่ายรูปบรรยากาศได้ · ไม่บังคับ"]];
 const blank=()=>({step:0,nick:"",email:"",age:"",consent:{sensor:false,data:false,photo:false,email:false},safety:{},energy:0,stress:0,busy:0,sleepy:0,sleep:"",caffeine:"",mood:[],weather:"",want:"",post:{energy:0,stress:0,busy:0,word:""}});
 
-function triage(p){if(p._tri&&!Object.keys(p.safety).length)return {lvl:p._tri,notes:p._notes||[]};const on=SAFETY.filter(q=>p.safety[q.k]);if(on.some(q=>q.lvl==="stop"))return {lvl:"stop",notes:on.map(q=>q.note)};
+// ทีมคุยแล้วรับเข้าเตียงได้ (เคส stop ยกเว้นลมชัก/ไวต่อแสงกะพริบ) → warn + โน้ต · ฝั่ง cloud ใช้กติกาเดียวกันใน staff_accept (007)
+const OVR_NOTES=["ทีมคุยแล้ว รับเข้าเตียง (ระบบแนะนำว่าไม่ควรนอน)","ลดแสงกะพริบ · ไม่แนะนำ BOOST"];
+const canOverride=tr=>tr.lvl==="stop"&&!tr.notes.some(n=>n.includes("แสงกะพริบ"));
+function triage(p){const t=triage0(p);return p._ovr&&canOverride(t)?{lvl:"warn",notes:[...OVR_NOTES,...t.notes]}:t}
+function triage0(p){if(p._tri&&!Object.keys(p.safety).length)return {lvl:p._tri,notes:p._notes||[]};const on=SAFETY.filter(q=>p.safety[q.k]);if(on.some(q=>q.lvl==="stop"))return {lvl:"stop",notes:on.map(q=>q.note)};
   if(SAFETY.some(q=>p.safety[q.k]===undefined))return {lvl:null,notes:[]};return {lvl:on.length?"warn":"ok",notes:on.map(q=>q.note)}}
 function fit(p){ // คะแนนความเหมาะของแต่ละเซ็ต (0–100) จากเช็กอิน + คำตอบชวนคุย
   if(p._fit&&!p.sleep)return p._fit;
@@ -51,5 +55,5 @@ const EN={
  consent:{sensor:"<b>Wear sensors</b> on the forehead and behind the ear · you can remove them at any time · required",
   data:"<b>Keep data for your report</b> for 30 days · never sold or shared · you can ask us to delete it · your report includes a 15-second video and sound clip from your session (no faces, viewable for 14 days) · required",
   photo:"We may take photos of the atmosphere · optional"}};
-window.IC={SAFETY,MOOD,WEATHER,WANT,CONSENT,EN,blank,triage,fit,payload};
+window.IC={SAFETY,MOOD,WEATHER,WANT,CONSENT,EN,blank,triage,fit,payload,canOverride};
 })();
