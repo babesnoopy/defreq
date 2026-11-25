@@ -1,0 +1,50 @@
+/* UNSENSORY RESEARCH LAB · บัตร + ใบตรวจ (ใช้ร่วม: แฟ้มคัดกรอง iPad และหน้าใบตรวจบนมือถือ) */
+:root{
+  /* UNFORMAT: ดำ · ขาว · เทา · เงิน */
+  --desk:#2B2C2E;--folder:#111213;--folder2:#232426;--tab:#C7C9CC;--silver:linear-gradient(100deg,#9EA1A5,#E9EAEC 38%,#B4B7BB 62%,#F4F4F5);
+  --paper:#F4F4F2;--paper2:#E2E3E4;--ink:#121212;--pencil:#6F7174;--rule:#BDBFC2;--fine:#DADBDD;
+  --hl:#121212;--pen:#262626;--ok:#121212;--warn:#121212;--stop:#121212;--brand:"Avenir Next","Avenir","Nunito Sans",sans-serif;
+  --baseline:#0E8FAA;--boost:#E8265E;--relax:#2BA89C;
+  --f:"IBM Plex Sans Thai",system-ui,sans-serif;--h:"Chakra Petch","IBM Plex Sans Thai",sans-serif;--m:"IBM Plex Mono",ui-monospace,monospace;--hand:"Sriracha",cursive;--disp:"Anton","Chakra Petch",sans-serif;
+}
+.kicker{font:12px var(--m);color:var(--pencil)}
+.lockup{font:700 12px/1.2 var(--brand);letter-spacing:.2em;color:var(--ink)}
+.lockup span{color:var(--pencil);font-weight:600}
+.stamp{display:inline-block;border:3px solid currentColor;padding:6px 14px;font:700 22px var(--h);transform:rotate(-6deg);border-radius:4px;opacity:.9;mix-blend-mode:multiply}
+.stamp.ok{color:var(--ink)}.stamp.warn{color:var(--ink);border-style:dashed}.stamp.stop{color:var(--paper);background:var(--ink);mix-blend-mode:normal}
+.lanyard{display:flex;flex-direction:column;align-items:center}
+.lanyard .strap{width:34px;height:70px;background:#111213;margin-bottom:-8px}
+.lanyard .hook{width:46px;height:22px;border:3px solid #C7C9CC;border-radius:6px;margin-bottom:-6px;z-index:1;background:transparent}
+.card{width:340px;background:#FAFAF9;overflow:hidden;border-radius:14px;padding:18px 20px 16px;position:relative;box-shadow:0 30px 50px -20px #000}
+.card .slot{width:60px;height:8px;border-radius:4px;background:#2a2a2a;margin:0 auto 14px}
+.card .foil{height:10px;margin:-2px -20px 14px;background:var(--silver)}
+.card .big{font:44px/.92 var(--disp);letter-spacing:.005em}
+.card .th{font:700 15px var(--h);margin-top:4px}
+.card dl{display:grid;grid-template-columns:86px 1fr;margin:14px 0 0;font-size:13px}
+.card dt{font:11px var(--m);color:var(--pencil);border-bottom:1px solid var(--rule);padding:6px 0}
+.card dd{margin:0;border-bottom:1px solid var(--rule);padding:2px 0;font:22px var(--hand);color:var(--pen)}
+.prints{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.prints div{border:1px solid var(--rule);height:74px;display:grid;place-items:center;font:11px var(--m);color:var(--pencil);text-align:center}
+.prints svg{width:100%;height:100%}
+.barcode{display:block;width:100%;height:34px;margin-top:12px}
+.cardfoot{display:flex;justify-content:space-between;font:10px var(--m);color:var(--pencil);margin-top:4px}
+/* รายงานบนมือถือ */
+.phone{width:380px;border-radius:32px;border:9px solid #0d0f0e;background:var(--paper);overflow:hidden;max-height:92vh;overflow-y:auto}
+.rec{padding:20px 18px 24px}
+.rec .num{font:12px var(--m);color:var(--pencil)}
+.rec .big{font:40px/.95 var(--disp)}
+.rec .grid{display:grid;grid-template-columns:1fr 132px;gap:12px;margin-top:10px}
+.rec dl{display:grid;grid-template-columns:78px 1fr;margin:0;font-size:12px}
+.rec dt{font:10px var(--m);color:var(--pencil);border-bottom:1px solid var(--rule);padding:5px 0}
+.rec dd{margin:0;border-bottom:1px solid var(--rule);font:18px var(--hand);color:var(--pen)}
+.mug{position:relative;border:1px solid var(--ink);background:#fff;height:176px;overflow:hidden}
+.mug .ticks{position:absolute;right:0;top:0;bottom:0;width:26px;font:8px var(--m);color:var(--pencil);border-left:1px solid var(--rule);display:flex;flex-direction:column;justify-content:space-between;padding:2px}
+.mug svg{position:absolute;left:0;top:0;width:calc(100% - 26px);height:100%}
+.rec h5{font:700 14px var(--h);margin:16px 0 4px;border-bottom:1.5px solid var(--ink);padding-bottom:3px}
+.rx{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:14px 14px 10px;margin-top:16px}
+.rx h6{margin:0 0 4px;font:700 17px var(--h)}
+.rx .row2{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--ink);padding:8px 0 4px;font-size:12px}
+.rx .row2 b{font:500 12px var(--h)}.rx .row2 span{font:18px var(--hand);color:var(--pen)}
+.rx .claim{font:italic 12px var(--f);margin-top:8px;color:var(--pencil)}
+.disc{font:10px/1.5 var(--m);color:var(--pencil);margin-top:14px;border-top:1px dashed var(--rule);padding-top:8px}
+.na{font-family:var(--f)!important;font-size:12px!important;color:var(--pencil)!important}

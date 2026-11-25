@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>SENSORY DE-FREQ · แบบคัดกรอง</title>
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="record.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--desk);color:var(--ink);font:16px/1.55 var(--f);-webkit-font-smoothing:antialiased}
+main{max-width:460px;margin:0 auto;padding:16px 12px 48px}
+.paper{background:var(--paper);border-radius:6px;padding:18px 16px 22px;box-shadow:0 24px 40px -24px #000}
+.big{font:700 26px/1.1 var(--h);margin:6px 0 2px}
+.steps{display:flex;gap:4px;margin:14px 0 4px}.steps i{flex:1;height:3px;background:var(--fine)}.steps i.on{background:var(--ink)}
+h2{font:700 19px var(--h);margin:14px 0 2px}
+.q{margin:16px 0 0}.q>label{display:block;font:700 15px var(--h);margin-bottom:6px}.q small{display:block;font:12px var(--f);color:var(--pencil)}
+input.line{width:100%;font:18px var(--f);border:0;border-bottom:1.5px solid var(--ink);background:transparent;padding:6px 2px;outline:none}
+.opts{display:flex;flex-wrap:wrap;gap:6px}
+.opt{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--rule);border-radius:3px;padding:9px 12px;font:15px var(--f);color:var(--ink);cursor:pointer;text-align:left}
+.opt i{width:18px;height:18px;border:1.5px solid var(--ink);display:grid;place-items:center;font-style:normal;font-size:13px;flex:none}
+.opt.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.consent{width:100%;margin-bottom:6px}
+.yn{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--fine)}
+.yn small{display:block;color:var(--pencil);font-size:12px}.yn .seg{display:flex;gap:6px;flex:none}
+.scale{display:flex;align-items:center;gap:6px;font:12px var(--f);color:var(--pencil)}
+.scale button{width:40px;height:40px;border:1px solid var(--rule);background:#fff;border-radius:3px;font:700 16px var(--h)}
+.scale button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:22px}
+.btn{background:#fff;color:var(--ink);border:1px solid var(--ink);border-radius:2px;padding:12px 18px;font:700 15px var(--h);cursor:pointer}
+.btn.pri{background:var(--ink);color:var(--paper)}.btn[disabled]{opacity:.35}
+.wait{text-align:center;padding:26px 6px 6px}.wait .stamp{font-size:20px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--ink);display:inline-block;animation:p 1.4s infinite}
+@keyframes p{50%{opacity:.2}}
+.err{color:#B3261E;font-size:14px;margin-top:10px}
+.paper{position:relative}.paper .lockup{padding-right:84px}.lang{position:absolute;top:14px;right:14px;background:#fff;border:1px solid var(--ink);border-radius:2px;padding:6px 10px;font:700 13px var(--h);color:var(--ink);cursor:pointer}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+</style>
+</head>
+<body>
+<main><div class="paper" id="app"></div></main>
+<script src="intake_core.js"></script>
+<script>
+/* แบบคัดกรองบนมือถือของผู้เข้าร่วม · เปิดจาก QR ที่เตียง: self.html?bed=1|2|3
+   ส่ง → เป็นเคสรอทีมกดรับบน iPad (ยังไม่เข้ารอบ) → รับแล้ว → ไปหน้าบัตร/ใบตรวจ (report.html) ของคนนี้
+   ไม่เก็บคำตอบความปลอดภัยรายข้อ ส่งแค่ผลคัดกรอง (intake_core.js → IC.payload) */
+const SB={url:"https://rocvqdplaesxmyncjcfz.supabase.co",key:"sb_publishable_5Nf1pNSNGkyp-7cOnUEzsQ_-F1f8xKC",booth:"booth-1"};
+const {SAFETY,MOOD,WEATHER,WANT,CONSENT,EN,blank,triage,fit}=IC;
+const $=s=>document.querySelector(s);
+/* ไทย / English: ?lang=en · จำไว้ในเครื่อง · ไม่ระบุ = ตามภาษามือถือ · ค่าที่ส่งเข้าระบบเหมือนเดิมทุกภาษา */
+let LANG=(()=>{const q=new URLSearchParams(location.search).get("lang");if(q==="en"||q==="th")return q;
+  try{const v=localStorage.getItem("defreq.lang");if(v)return v}catch(e){}return (navigator.language||"th").toLowerCase().startsWith("th")?"th":"en"})();
+const T=(th,en)=>LANG==="en"?en:th;
+const setLang=l=>{LANG=l;try{localStorage.setItem("defreq.lang",l)}catch(e){}document.documentElement.lang=l;document.title=T("SENSORY DE-FREQ · แบบคัดกรอง","SENSORY DE-FREQ · Screening");draw()};
+const BED=Math.min(3,Math.max(1,parseInt(new URLSearchParams(location.search).get("bed"))||1));
+const KEY="defreq.self."+BED;
+let P=blank(),S=null,ERR="",BUSY=false,timer=null;
+const store={get(){try{return JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){return null}},set(v){try{v?localStorage.setItem(KEY,JSON.stringify(v)):localStorage.removeItem(KEY)}catch(e){}}};
+async function rpc(fn,args){
+  const r=await fetch(`${SB.url}/rest/v1/rpc/${fn}`,{method:"POST",cache:"no-store",
+    headers:{apikey:SB.key,Authorization:`Bearer ${SB.key}`,"Content-Type":"application/json","Content-Profile":"unsensory"},body:JSON.stringify(args)});
+  const d=await r.json().catch(()=>null);if(!r.ok)throw new Error((d&&d.message)||("ระบบตอบกลับ "+r.status));return d}
+const reportUrl=t=>new URL("report.html",location.href).href.split("?")[0]+"?t="+encodeURIComponent(t);
+
+const opts=(name,list,val,multi,tr)=>`<div class="opts">${list.map(x=>{let[k,l]=Array.isArray(x)?x:[x,x];if(LANG==="en"&&tr&&tr[k])l=tr[k];const on=multi?val.includes(k):val===k;return `<button class="opt ${on?"on":""}" data-ch="${name}" data-k="${k}"><i>${on?"✓":""}</i><span>${l}</span></button>`}).join("")}</div>`;
+const scale=(name,lo,hi,val)=>`<div class="scale"><span>${lo}</span>${[1,2,3,4,5].map(n=>`<button class="${val===n?"on":""}" data-sc="${name}" data-n="${n}" aria-label="${n}">${n}</button>`).join("")}<span>${hi}</span></div>`;
+const TITLES_TH=["ข้อมูลและความยินยอม","ความปลอดภัย","เช็กอินร่างกาย","ช่วงนี้เป็นยังไง"],TITLES_EN=["About you & consent","Safety","Body check-in","How have things been?"];
+const title=i=>T(TITLES_TH[i],TITLES_EN[i]);
+function canNext(p){return [p.nick&&p.age&&p.age!=="<18"&&p.consent.sensor&&p.consent.data,SAFETY.every(q=>p.safety[q.k]!==undefined),p.energy&&p.stress&&p.busy&&p.sleepy&&p.sleep&&p.caffeine,p.weather&&p.want][p.step]}
+function step(p){const i=p.step;
+  if(i===0)return `<div class="q"><label for="nick">${T("ชื่อเล่น","Nickname")}</label><input class="line" id="nick" value="${p.nick.replace(/"/g,"&quot;")}" autocomplete="off" maxlength="30"></div>
+    <div class="q"><label>${T("ช่วงอายุ","Age")}</label>${opts("age",[["<18",T("ต่ำกว่า 18","Under 18")],"18-24","25-34","35-44","45+"],p.age)}${p.age==="<18"?`<div class="err">${T("อายุต่ำกว่า 18 ต้องมีผู้ปกครองเซ็นยินยอมที่บูธก่อน · กรุณาติดต่อทีม","Under 18 needs a parent or guardian to sign consent at the booth first · please talk to our team")}</div>`:""}</div>
+    <div class="q"><label>${T("ความยินยอม","Consent")}</label>${CONSENT.map(([k,t])=>{t=LANG==="en"?EN.consent[k]:t;return `<button class="consent opt ${p.consent[k]?"on":""}" data-cs="${k}"><i>${p.consent[k]?"✓":""}</i><span>${t}</span></button>`}).join("")}</div>`;
+  if(i===1)return `<p class="kicker" style="margin:10px 0 0">${T('ไม่แน่ใจให้ตอบ "ใช่" ไว้ก่อน · คำตอบหมวดนี้ไม่ถูกเก็บ เก็บแค่ผลคัดกรอง','If unsure, answer "Yes" · these answers are not stored, only the screening result')}</p>${SAFETY.map(q=>{const[qt,qs]=LANG==="en"?EN.safety[q.k]:[q.t,q.s];return `<div class="yn"><span>${qt}${qs?`<small>${qs}</small>`:""}</span><span class="seg">
+     <button class="opt ${p.safety[q.k]===false?"on":""}" data-sf="${q.k}" data-v="0"><i>${p.safety[q.k]===false?"✓":""}</i>${T("ไม่ใช่","No")}</button>
+     <button class="opt ${p.safety[q.k]===true?"on":""}" data-sf="${q.k}" data-v="1"><i>${p.safety[q.k]===true?"✓":""}</i>${T("ใช่","Yes")}</button></span></div>`}).join("")}`;
+  if(i===2)return `<div class="q"><label>${T("พลังงานตอนนี้","Energy right now")}</label>${scale("energy",T("หมดแรง","Drained"),T("เต็มถัง","Full"),p.energy)}</div>
+    <div class="q"><label>${T("ความเครียด","Stress")}</label>${scale("stress",T("สบายๆ","Relaxed"),T("ตึงมาก","Very tense"),p.stress)}</div>
+    <div class="q"><label>${T("ในหัวมีเรื่องวนแค่ไหน","How busy is your mind?")}</label>${scale("busy",T("โล่ง","Clear"),T("วนไม่หยุด","Racing"),p.busy)}</div>
+    <div class="q"><label>${T("ง่วงแค่ไหน","How sleepy are you?")}</label>${scale("sleepy",T("ตาสว่าง","Wide awake"),T("จะหลับ","Nodding off"),p.sleepy)}</div>
+    <div class="q"><label>${T("เมื่อคืนนอนกี่ชั่วโมง","Hours of sleep last night")}</label>${opts("sleep",["≤4","5-6","7-8","9+"],p.sleep)}</div>
+    <div class="q"><label>${T("กาแฟหรือชาวันนี้","Coffee or tea today")}</label>${opts("caffeine",[["0",T("ไม่ได้ดื่ม","None")],["1",T("1 แก้ว","1 cup")],["2",T("2 แก้ว","2 cups")],["3+",T("3 แก้วขึ้นไป","3 or more")]],p.caffeine)}</div>`;
+  return `<div class="q"><label>${T("ช่วงนี้ชีวิตเป็นยังไง","How has life been lately?")}<small>${T("เลือกได้หลายข้อ","Choose any")}</small></label>${opts("mood",MOOD,p.mood,true,EN.mood)}</div>
+    <div class="q"><label>${T("ถ้าใจตอนนี้เป็นสภาพอากาศ","If your mind were the weather right now")}</label>${opts("weather",WEATHER,p.weather,false,EN.weather)}</div>
+    <div class="q"><label>${T("อยากได้อะไรจากรอบนี้","What do you want from this session?")}</label>${opts("want",WANT,p.want,false,EN.want)}</div>`}
+const head=sub=>`<button class="lang" id="lang" lang="${LANG==="en"?"th":"en"}">${LANG==="en"?"ภาษาไทย":"English"}</button><div class="lockup">UNSENSORY RESEARCH LAB <span>/ SENSORY DE-FREQ</span></div><div class="big">${T("เตียง","Bed")} ${BED}</div><div class="kicker">${sub}</div>`;
+const bindLang=()=>{const b=$("#lang");if(b)b.onclick=()=>setLang(LANG==="en"?"th":"en")};
+
+function draw(){const app=$("#app");
+  if(S){const st=S.status;
+    if(st==="accepted"&&S.token){location.replace(reportUrl(S.token));return}
+    const nk=(S.nick||"").replace(/</g,"&lt;");
+    const body=st==="pending"?`<div class="stamp warn">${T("รอทีมกดรับเคส","Waiting for our team")}</div><p style="margin-top:18px">${T(`ส่งแบบคัดกรองของ <b>${nk}</b> แล้ว<br>ทีมจะเรียกและพาไปที่เตียงในไม่ช้า`,`<b>${nk}</b>, your form has been sent<br>our team will call you and take you to your bed shortly`)}</p><p class="kicker"><span class="dot"></span> ${T("หน้านี้จะเปลี่ยนเองเมื่อทีมรับเคส","This page updates by itself when the team accepts")}</p>`
+      :st==="accepted"?`<div class="stamp ok">${T("ทีมรับเคสแล้ว","Accepted")}</div><p style="margin-top:18px">${T("ทีมจะพาไปที่เตียง","Our team will take you to your bed")}</p>`
+      :st==="rejected"?`<div class="stamp stop">${T("ติดต่อทีมที่บูธ","Please see our team")}</div><p style="margin-top:18px">${T("ทีมขอคุยกับคุณก่อน กรุณาแจ้งทีมที่บูธ","Our team would like to talk with you first · please come to the booth")}</p>`
+      :`<div class="stamp">${T("เคสหมดเวลา","Form expired")}</div><p style="margin-top:18px">${T("ยังไม่มีทีมรับเคสภายใน 30 นาที กรุณาส่งใหม่ หรือแจ้งทีมที่บูธ","No one picked this up within 30 minutes · please send it again or talk to our team")}</p>`;
+    app.innerHTML=head(T("แบบคัดกรอง","Screening"))+`<div class="wait">${body}</div>${st==="rejected"||st==="expired"?`<div class="nav" style="justify-content:center"><button class="btn" id="again">${T("ทำแบบคัดกรองใหม่","Start again")}</button></div>`:""}`;
+    bindLang();const ag=$("#again");if(ag)ag.onclick=()=>{store.set(null);S=null;P=blank();draw()};return}
+  const p=P;
+  app.innerHTML=head(`${T("แบบคัดกรอง","Screening")} · ${p.step+1}/4 ${title(p.step)}`)+`<div class="steps">${[0,1,2,3].map(k=>`<i class="${k<=p.step?"on":""}"></i>`).join("")}</div>`
+    +`<h2>${title(p.step)}</h2>`+step(p)+(ERR?`<div class="err">${ERR}</div>`:"")
+    +`<div class="nav">${p.step?`<button class="btn" id="back">${T("ย้อนกลับ","Back")}</button>`:"<span></span>"}<button class="btn pri" id="next" ${canNext(p)&&!BUSY?"":"disabled"}>${p.step<3?T("ถัดไป","Next"):(BUSY?T("กำลังส่ง…","Sending…"):T("ส่งให้ทีม","Send to team"))}</button></div>`;
+  bind();bindLang()}
+function bind(){const p=P;
+  const n=$("#nick");if(n)n.oninput=()=>{p.nick=n.value.trim();$("#next").disabled=!canNext(p)};
+  document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>{const k=b.dataset.ch,v=b.dataset.k;if(k==="mood")p.mood=p.mood.includes(v)?p.mood.filter(x=>x!==v):[...p.mood,v];else p[k]=p[k]===v?"":v;draw()});
+  document.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{p[b.dataset.sc]=+b.dataset.n;draw()});
+  document.querySelectorAll("[data-sf]").forEach(b=>b.onclick=()=>{p.safety[b.dataset.sf]=b.dataset.v==="1";draw()});
+  document.querySelectorAll("[data-cs]").forEach(b=>b.onclick=()=>{p.consent[b.dataset.cs]=!p.consent[b.dataset.cs];draw()});
+  const bk=$("#back");if(bk)bk.onclick=()=>{p.step--;ERR="";draw();scrollTo(0,0)};
+  $("#next").onclick=async()=>{if(p.step<3){p.step++;ERR="";draw();scrollTo(0,0);return}
+    BUSY=true;ERR="";draw();
+    try{const d=await rpc("self_submit",{p_booth:SB.booth,p_bed:BED,p:IC.payload(p)});
+      store.set({claim:d.claim,nick:p.nick});S={status:"pending",nick:p.nick};poll()}
+    catch(e){ERR=T("ส่งไม่สำเร็จ: ","Could not send: ")+e.message+T(" · ลองอีกครั้ง หรือแจ้งทีมที่บูธ"," · please try again or talk to our team")}
+    BUSY=false;draw();scrollTo(0,0)}}
+async function poll(){clearTimeout(timer);const c=store.get();if(!c)return;
+  try{const d=await rpc("self_status",{p_claim:c.claim});if(d){S={...d,nick:d.nick||c.nick};draw()}}catch(e){}
+  if(S&&S.status==="pending")timer=setTimeout(poll,4000)}
+document.documentElement.lang=LANG;document.title=T("SENSORY DE-FREQ · แบบคัดกรอง","SENSORY DE-FREQ · Screening");
+(async()=>{const c=store.get();if(c){S={status:"pending",nick:c.nick};draw();await poll()}else draw()})();
+</script>
+</body>
+</html>

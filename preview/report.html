@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>UNSENSORY RESEARCH LAB · ใบตรวจ</title>
+<link href="vendor/fonts/fonts.css" rel="stylesheet">
+<link href="record.css" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--desk);color:var(--ink);font:16px/1.55 var(--f);-webkit-font-smoothing:antialiased}
+main{max-width:440px;margin:0 auto;padding:18px 14px 40px;display:flex;flex-direction:column;align-items:center}
+.paper{width:100%;background:var(--paper);border-radius:6px;box-shadow:0 24px 40px -24px #000}
+.msg{color:#C7C9CC;text-align:center;font-size:14px;margin:16px 6px 0;max-width:360px}
+.msg b{display:block;color:#fff;font:700 18px var(--h);margin-bottom:4px}
+.btn{margin-top:16px;background:#F4F4F2;color:#121212;border:0;border-radius:2px;padding:12px 22px;font:700 15px var(--h);cursor:pointer}
+.btn[disabled]{opacity:.5}
+#shot img{max-width:300px;margin-top:14px;border-radius:12px}#shot p{color:#ddd;font-size:13px;text-align:center}
+.lanyard .strap{height:40px}
+.tabs{display:flex;gap:6px;margin-bottom:14px}
+.tabs button{background:#232426;color:#A9ACB0;border:0;padding:8px 16px;border-radius:2px;font:500 14px var(--h)}
+.tabs button.on{background:#F4F4F2;color:#121212}
+.post{width:100%;background:var(--paper);border-radius:6px;padding:14px 16px 16px;margin-bottom:14px}
+.post h3{font:700 17px var(--h);margin:0 0 2px}.post .k{font:12px var(--f);color:var(--pencil)}
+.post .row{margin-top:12px}.post .row>span{display:block;font:700 14px var(--h);margin-bottom:6px}
+.sc{display:flex;align-items:center;gap:6px;font:11px var(--f);color:var(--pencil)}
+.sc button{width:38px;height:38px;border:1px solid var(--rule);background:#fff;border-radius:3px;font:700 15px var(--h);color:var(--ink)}
+.sc button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.post input{width:100%;font:17px var(--f);border:0;border-bottom:1.5px solid var(--ink);background:transparent;padding:6px 2px;outline:none}
+.post .nav{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+.post .nav button{border:1px solid var(--ink);background:#fff;color:var(--ink);border-radius:2px;padding:10px 16px;font:700 14px var(--h)}
+.post .nav button.pri{background:var(--ink);color:var(--paper)}.post .nav button[disabled]{opacity:.35}
+</style>
+</head>
+<body>
+<main id="app"><p class="msg">กำลังเปิดใบตรวจ…</p></main>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="report_view.js"></script>
+<script>
+/* ใบตรวจสาธารณะ: เปิดจาก QR บนบัตร · ?t=<token>
+   อ่านจาก Supabase ผ่านฟังก์ชัน public_report (คีย์สาธารณะ อ่านได้แค่ใบของ token นี้)
+   ถ้าเปิดจากเครื่อง PC ในงาน และเน็ตหลุด → อ่านจากเครื่อง PC แทน */
+const SB={url:"https://rocvqdplaesxmyncjcfz.supabase.co",key:"sb_publishable_5Nf1pNSNGkyp-7cOnUEzsQ_-F1f8xKC"};
+const T=new URLSearchParams(location.search).get("t")||"";
+const $=s=>document.querySelector(s);let view=null,D=null;
+async function fromCloud(){const r=await fetch(`${SB.url}/rest/v1/rpc/public_report`,{method:"POST",
+  headers:{apikey:SB.key,Authorization:`Bearer ${SB.key}`,"Content-Type":"application/json","Content-Profile":"unsensory"},body:JSON.stringify({p_token:T})});
+  if(!r.ok)throw new Error(r.status);const d=await r.json();if(!d)return null;return {...d.report,status:d.status||d.report.status}}
+async function fromBooth(){const r=await fetch(`/api/report?t=${encodeURIComponent(T)}`,{cache:"no-store"});if(!r.ok)return null;return (await r.json()).report}
+async function load(){if(T.length<20)return null;
+  try{const d=await fromCloud();if(d)return d}catch(e){}
+  try{return await fromBooth()}catch(e){return null}}
+function render(){const app=$("#app");
+  if(!D){app.innerHTML=`<p class="msg"><b>ไม่พบใบตรวจ</b>ลิงก์อาจพิมพ์ไม่ครบ หรือหมดอายุแล้ว (เก็บไว้ 30 วัน) · ถ้ายังอยู่ในงาน ถามทีมที่บูธได้เลย</p>`;return}
+  const done=/^(done|aborted)$/.test(D.status);if(!view)view=done?"record":"card";
+  const tabs=done?`<div class="tabs"><button data-v="record" class="${view==="record"?"on":""}">ใบตรวจ</button><button data-v="card" class="${view==="card"?"on":""}">บัตร</button></div>`:"";
+  const body=view==="record"?`<div class="paper">${RV.record(D,{url:location.href})}</div>`:RV.card(D);
+  const msg=done?"":D.status==="running"?`<p class="msg"><b>กำลังเก็บลายพิมพ์</b>ใบตรวจจะขึ้นที่ลิงก์นี้เองหลังจบรอบ ไม่ต้องสแกนใหม่</p>`
+    :`<p class="msg"><b>บัตรพร้อมแล้ว</b>หลังจบรอบ รีเฟรชหน้านี้อีกครั้งเพื่อรับใบ report</p>`;
+  app.innerHTML=postForm(done)+tabs+body+msg+`<button class="btn" id="save">บันทึก${view==="record"?"ใบตรวจ":"บัตร"}เป็นรูป</button><div id="shot"></div>`;
+  document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{view=b.dataset.v;render()});
+  bindPost();
+  $("#save").onclick=async e=>{const b=e.target;b.disabled=true;b.textContent="กำลังสร้างรูป…";
+    try{await document.fonts.ready;const el=view==="record"?$(".paper"):$(".lanyard");const c=await html2canvas(el,{backgroundColor:view==="record"?"#F4F4F2":null,scale:3});
+      $("#shot").innerHTML=`<img alt="" src="${c.toDataURL("image/png")}"><p>กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ"</p>`;b.textContent="สร้างรูปแล้ว"}
+    catch(err){b.disabled=false;b.textContent="ลองอีกครั้ง"}}}
+/* หลังจบรอบ: ถามความรู้สึก 2 ข้อ (ไม่บังคับ · ข้ามได้ · ส่งได้ครั้งเดียว) → เทียบกับตอนเช็กอินในใบตรวจ */
+const PK="defreq.postskip."+T;let PQ={stress:0,energy:0,word:""},PERR="";
+const skipped=()=>{try{return localStorage.getItem(PK)==="1"}catch(e){return false}};
+function postForm(done){if(!done||D.post||skipped())return "";
+  const sc=(k,lo,hi)=>`<div class="sc"><span>${lo}</span>${[1,2,3,4,5].map(n=>`<button class="${PQ[k]===n?"on":""}" data-pq="${k}" data-n="${n}">${n}</button>`).join("")}<span>${hi}</span></div>`;
+  return `<div class="post"><h3>ตอนนี้รู้สึกยังไง</h3><div class="k">ไม่บังคับ · ใช้เทียบกับตอนก่อนนอนในใบตรวจ</div>
+   <div class="row"><span>ความเครียด</span>${sc("stress","สบายๆ","ตึงมาก")}</div>
+   <div class="row"><span>พลังงาน</span>${sc("energy","หมดแรง","เต็มถัง")}</div>
+   <div class="row"><span>หนึ่งคำหลังนอน</span><input id="pword" maxlength="24" value="${PQ.word.replace(/"/g,"&quot;")}" autocomplete="off"></div>
+   ${PERR?`<div class="k" style="color:#B3261E;margin-top:8px">${PERR}</div>`:""}
+   <div class="nav"><button id="pskip">ข้าม</button><button class="pri" id="psend" ${PQ.stress||PQ.energy||PQ.word?"":"disabled"}>ส่ง</button></div></div>`}
+function bindPost(){const w=$("#pword");if(!w)return;
+  w.oninput=()=>{PQ.word=w.value;$("#psend").disabled=!(PQ.stress||PQ.energy||PQ.word.trim())};
+  document.querySelectorAll("[data-pq]").forEach(b=>b.onclick=()=>{PQ[b.dataset.pq]=+b.dataset.n;render()});
+  $("#pskip").onclick=()=>{try{localStorage.setItem(PK,"1")}catch(e){}render()};
+  $("#psend").onclick=async e=>{e.target.disabled=true;e.target.textContent="กำลังส่ง…";
+    try{const r=await fetch(`${SB.url}/rest/v1/rpc/public_post`,{method:"POST",headers:{apikey:SB.key,Authorization:`Bearer ${SB.key}`,"Content-Type":"application/json","Content-Profile":"unsensory"},
+        body:JSON.stringify({p_token:T,p:{stress:PQ.stress||null,energy:PQ.energy||null,word:PQ.word.trim()}})});
+      if(!r.ok)throw new Error(r.status);PERR="";D=(await load())||D;if(!D.post)D.post={stress:PQ.stress||undefined,energy:PQ.energy||undefined,word:PQ.word.trim()||undefined}}
+    catch(err){PERR="ส่งไม่สำเร็จ ลองอีกครั้ง"}
+    render()}}
+(async()=>{D=await load();render();
+  if(D&&!/^(done|aborted)$/.test(D.status))setInterval(async()=>{if(document.hidden)return;const d=await load();if(d&&d.status!==D.status){D=d;view=null;render()}},20000)})();
+</script>
+</body>
+</html>
