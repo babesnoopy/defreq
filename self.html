@@ -68,9 +68,15 @@ const opts=(name,list,val,multi,tr)=>`<div class="opts">${list.map(x=>{let[k,l]=
 const scale=(name,lo,hi,val)=>`<div class="scale"><span>${lo}</span>${[1,2,3,4,5].map(n=>`<button class="${val===n?"on":""}" data-sc="${name}" data-n="${n}" aria-label="${n}">${n}</button>`).join("")}<span>${hi}</span></div>`;
 const TITLES_TH=["ข้อมูลและความยินยอม","ความปลอดภัย","เช็กอินร่างกาย","ช่วงนี้เป็นยังไง"],TITLES_EN=["About you & consent","Safety","Body check-in","How have things been?"];
 const title=i=>T(TITLES_TH[i],TITLES_EN[i]);
-function canNext(p){return [p.nick&&p.age&&p.age!=="<18"&&p.consent.sensor&&p.consent.data,SAFETY.every(q=>p.safety[q.k]!==undefined),p.energy&&p.stress&&p.busy&&p.sleepy&&p.sleep&&p.caffeine,p.weather&&p.want][p.step]}
+const EMAIL_OK=e=>/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test((e||"").trim());
+const emailOk=p=>!p.email.trim()||(EMAIL_OK(p.email)&&p.consent.email);     // ไม่กรอกก็ได้ · กรอกแล้วต้องถูกรูปแบบ + ติ๊กยินยอม
+function canNext(p){return [p.nick&&p.age&&p.age!=="<18"&&p.consent.sensor&&p.consent.data&&emailOk(p),SAFETY.every(q=>p.safety[q.k]!==undefined),p.energy&&p.stress&&p.busy&&p.sleepy&&p.sleep&&p.caffeine,p.weather&&p.want][p.step]}
 function step(p){const i=p.step;
   if(i===0)return `<div class="q"><label for="nick">${T("ชื่อเล่น","Nickname")}</label><input class="line" id="nick" value="${p.nick.replace(/"/g,"&quot;")}" autocomplete="off" maxlength="30"></div>
+    <div class="q"><label for="email">${T("อีเมล","Email")} <small style="display:inline">${T("· ไม่บังคับ · ใช้ส่งคลิปภาพและเสียงจากรอบของคุณตามไปให้","· optional · we use it to send you the video & sound clip from your session")}</small></label>
+      <input class="line" id="email" type="text" inputmode="email" autocapitalize="off" spellcheck="false" autocomplete="email" maxlength="120" value="${(p.email||"").replace(/"/g,"&quot;")}" placeholder="name@example.com">
+      <div class="err" id="emErr" style="display:none">${T("รูปแบบอีเมลไม่ถูกต้อง","That email doesn't look right")}</div>
+      <button class="consent opt ${p.consent.email?"on":""}" data-cs="email" id="emOk" style="margin-top:8px;${p.email.trim()?"":"display:none"}"><i>${p.consent.email?"✓":""}</i><span>${T("<b>ส่งคลิปและลิงก์ใบตรวจไปที่อีเมลนี้</b> ใช้เพื่อส่งคลิปเท่านั้น ไม่ส่งโฆษณา ไม่แชร์ · ลบหลัง 30 วัน","<b>Send my clip and report link to this email</b> · used only for this · no marketing, never shared · deleted after 30 days")}</span></button></div>
     <div class="q"><label>${T("ช่วงอายุ","Age")}</label>${opts("age",[["<18",T("ต่ำกว่า 18","Under 18")],"18-24","25-34","35-44","45+"],p.age)}${p.age==="<18"?`<div class="err">${T("อายุต่ำกว่า 18 ต้องมีผู้ปกครองเซ็นยินยอมที่บูธก่อน · กรุณาติดต่อทีม","Under 18 needs a parent or guardian to sign consent at the booth first · please talk to our team")}</div>`:""}</div>
     <div class="q"><label>${T("ความยินยอม","Consent")}</label>${CONSENT.map(([k,t])=>{t=LANG==="en"?EN.consent[k]:t;return `<button class="consent opt ${p.consent[k]?"on":""}" data-cs="${k}"><i>${p.consent[k]?"✓":""}</i><span>${t}</span></button>`}).join("")}</div>`;
   if(i===1)return `<p class="kicker" style="margin:10px 0 0">${T('ไม่แน่ใจให้ตอบ "ใช่" ไว้ก่อน · คำตอบหมวดนี้ไม่ถูกเก็บ เก็บแค่ผลคัดกรอง','If unsure, answer "Yes" · these answers are not stored, only the screening result')}</p>${SAFETY.map(q=>{const[qt,qs]=LANG==="en"?EN.safety[q.k]:[q.t,q.s];return `<div class="yn"><span>${qt}${qs?`<small>${qs}</small>`:""}</span><span class="seg">
@@ -105,6 +111,9 @@ function draw(){const app=$("#app");
   bind();bindLang()}
 function bind(){const p=P;
   const n=$("#nick");if(n)n.oninput=()=>{p.nick=n.value.trim();$("#next").disabled=!canNext(p)};
+  const em=$("#email");if(em){const sync=()=>{p.email=em.value;$("#emOk").style.display=p.email.trim()?"":"none";$("#next").disabled=!canNext(p)};
+    em.oninput=()=>{sync();$("#emErr").style.display="none"};
+    em.onblur=()=>{sync();$("#emErr").style.display=p.email.trim()&&!EMAIL_OK(p.email)?"":"none"}}
   document.querySelectorAll("[data-ch]").forEach(b=>b.onclick=()=>{const k=b.dataset.ch,v=b.dataset.k;if(k==="mood")p.mood=p.mood.includes(v)?p.mood.filter(x=>x!==v):[...p.mood,v];else p[k]=p[k]===v?"":v;draw()});
   document.querySelectorAll("[data-sc]").forEach(b=>b.onclick=()=>{p[b.dataset.sc]=+b.dataset.n;draw()});
   document.querySelectorAll("[data-sf]").forEach(b=>b.onclick=()=>{p.safety[b.dataset.sf]=b.dataset.v==="1";draw()});

@@ -18,7 +18,7 @@ const WANT=[["rest","ได้พัก"],["energy","ได้พลัง"],["s
 const CONSENT=[["sensor","<b>ติดเซนเซอร์</b> ขั้วที่หน้าผากและเซนเซอร์ที่หลังหู ถอดออกได้ทุกเมื่อ · จำเป็น"],
  ["data","<b>เก็บข้อมูลเพื่อทำรายงาน</b> เก็บ 30 วัน ไม่ขาย ไม่แชร์ ขอลบได้ · รายงานมีคลิปภาพและเสียง 15 วินาทีจากรอบของคุณ (ไม่มีภาพใบหน้า ดูได้ 14 วัน) · จำเป็น"],
  ["photo","ถ่ายรูปบรรยากาศได้ · ไม่บังคับ"]];
-const blank=()=>({step:0,nick:"",age:"",consent:{sensor:false,data:false,photo:false},safety:{},energy:0,stress:0,busy:0,sleepy:0,sleep:"",caffeine:"",mood:[],weather:"",want:"",post:{energy:0,stress:0,busy:0,word:""}});
+const blank=()=>({step:0,nick:"",email:"",age:"",consent:{sensor:false,data:false,photo:false,email:false},safety:{},energy:0,stress:0,busy:0,sleepy:0,sleep:"",caffeine:"",mood:[],weather:"",want:"",post:{energy:0,stress:0,busy:0,word:""}});
 
 function triage(p){if(p._tri&&!Object.keys(p.safety).length)return {lvl:p._tri,notes:p._notes||[]};const on=SAFETY.filter(q=>p.safety[q.k]);if(on.some(q=>q.lvl==="stop"))return {lvl:"stop",notes:on.map(q=>q.note)};
   if(SAFETY.some(q=>p.safety[q.k]===undefined))return {lvl:null,notes:[]};return {lvl:on.length?"warn":"ok",notes:on.map(q=>q.note)}}
@@ -32,7 +32,7 @@ function fit(p){ // คะแนนความเหมาะของแต่
   const e=Object.fromEntries(Object.entries(s).map(([k,v])=>[k,Math.exp(Math.max(0,v)*.3)])),t=e.baseline+e.boost+e.relax;
   return Object.fromEntries(Object.entries(e).map(([k,v])=>[k,Math.round(v/t*100)]))}
 // ข้อมูลที่ส่งเข้าระบบ (เหมือนกันทั้ง iPad และมือถือ) · ไม่มีคำตอบความปลอดภัยรายข้อ
-function payload(p){const tr=triage(p);return {nick:p.nick,age:p.age,consent:p.consent,triage:tr.lvl,notes:tr.notes,fit:fit(p),
+function payload(p){const tr=triage(p);return {nick:p.nick,age:p.age,consent:p.consent,email:p.consent.email?(p.email||"").trim():"",triage:tr.lvl,notes:tr.notes,fit:fit(p),
   checkin:{energy:p.energy,stress:p.stress,busy:p.busy,sleepy:p.sleepy},gimmick:{mood:p.mood,weather:p.weather,want:p.want}}}
 // ภาษาอังกฤษสำหรับหน้าที่ผู้เข้าร่วมเห็น (self.html) · ค่าที่ส่งเข้าระบบยังเป็นคีย์/คำไทยเดิม ทีมบน iPad เห็นภาษาไทยเหมือนเดิม
 const EN={
