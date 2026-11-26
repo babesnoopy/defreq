@@ -20,18 +20,29 @@ function qrSvg(text,px){
 function barcode(txt){let x=0,r="",h=0;for(const ch of txt+"UNSENSORY"){h=(h*31+ch.charCodeAt(0))>>>0;for(let k=0;k<4;k++){const w=1+((h>>(k*3))&3),g=1+((h>>(k*3+2))&1);r+=`<rect x="${x}" y="0" width="${w}" height="34" fill="#121212"/>`;x+=w+g}}return `<svg class="barcode" viewBox="0 0 ${x} 34" preserveAspectRatio="none">${r}</svg>`}
 
 /* ── ลายพิมพ์จากค่าจริง ── */
-function brainPrint(v){ // ความนิ่งของสมองตลอดรอบ → วงลายนิ้วมือ
-  const n=v.length;let d="";
-  for(let k=0;k<9;k++){const pts=[],R0=4+k*4.2;
-    for(let a=0;a<=72;a++){const t=a/72*Math.PI*2,c=v[(a+k*5)%n],c2=v[(a*3+k)%n];
-      const r=R0*(1+.22*(c-.5)+.08*(c2-.5)*Math.sin(t*3+k));pts.push(`${(50+Math.cos(t)*r*1.15).toFixed(1)},${(50+Math.sin(t)*r).toFixed(1)}`)}
-    d+=`<polyline points="${pts.join(" ")}" fill="none" stroke="#121212" stroke-width="1.5" stroke-dasharray="${k%3===1?"5 3":"none"}"/>`}
+function smooth(v,k){const n=v.length;return v.map((_,i)=>{let a=0;for(let j=-k;j<=k;j++)a+=v[(i+j+n)%n];return a/(2*k+1)})}
+function stats(v){const n=v.length,m=v.reduce((a,b)=>a+b,0)/n;return [m,Math.sqrt(v.reduce((a,b)=>a+(b-m)**2,0)/n)||1e-3]}
+function brainPrint(v0){ // ความนิ่งของสมองตลอดรอบ → วงลายนิ้วมือ · แต่ละวง = ช่วงเวลาหนึ่งของรอบ · รูปทรง/มุม/ความรี มาจากค่าของคนนั้นเอง
+  const raw=v0.filter(x=>x!=null);if(raw.length<6)return "";
+  const v=smooth(raw,2),n=v.length,[mean,sd]=stats(v),[,sdr]=stats(raw),
+        sq=.85+mean*.45,rot=(mean*11+sdr*17)%Math.PI,lobes=2+Math.round(sdr*10)%4;
+  let d="";
+  for(let k=0;k<9;k++){const pts=[],R0=4.5+k*4.1,off=Math.floor(k*n/9);
+    for(let a=0;a<=120;a++){const t=a/120*Math.PI*2,i=(off+Math.floor(a/120*n))%n,
+        r=R0+1.8*Math.tanh((v[i]-mean)/sd)+1.1*Math.sin(t*lobes+k*.7+mean*6)+.35*Math.sin(t*(lobes*3+1)+k),tt=t+rot;
+      pts.push(`${(50+Math.cos(tt)*r*sq).toFixed(1)},${(50+Math.sin(tt)*r).toFixed(1)}`)}
+    const seg=v.slice(off,off+Math.ceil(n/9)),sm=seg.reduce((a,b)=>a+b,0)/(seg.length||1);
+    d+=`<polyline points="${pts.join(" ")}" fill="none" stroke="#121212" stroke-width="${sm>=mean?1.6:1}" stroke-dasharray="${sm<mean-sd*.5?"4 3":"none"}"/>`}
   return `<svg viewBox="0 0 100 100">${d}</svg>`}
-function heartPrint(ibi){ // ระยะห่างระหว่างการเต้นแต่ละครั้ง (ms) → 7 แถวคลื่นชีพจร
-  let d="",j=0;
-  for(let k=0;k<7;k++){const y0=10+k*13,pts=[`0,${y0}`];let x=0;
-    while(x<100){const w=Math.max(6,Math.min(30,ibi[j%ibi.length]/1000*20));j++;
-      pts.push(`${(x+w*.15).toFixed(1)},${(y0-6).toFixed(1)}`,`${(x+w*.3).toFixed(1)},${(y0+3).toFixed(1)}`,`${Math.min(100,x+w).toFixed(1)},${y0}`);x+=w}
+function heartPrint(ibi0){ // ระยะห่างระหว่างการเต้นแต่ละครั้ง (ms) → 7 แถว · แต่ละแถว = ช่วงหนึ่งของรอบ · ระยะห่างยอด = จังหวะของคนนั้น · เส้นฐานลอยตามช่วงช้า/เร็ว
+  const raw=ibi0.filter(x=>x>250&&x<2000);if(raw.length<8)return "";
+  const v=smooth(raw,2),n=v.length,[mean,sd]=stats(v),[,sdr]=stats(raw),w0=Math.max(7,Math.min(24,(mean-350)/1000*30)),
+        peak=3+Math.min(5,sdr/mean*18);           // จังหวะแปรผันมาก = ยอดสูง
+  let d="";
+  for(let k=0;k<7;k++){const y0=10+k*13,off=Math.floor(k*n/7),pts=[];let x=0,j=off;
+    while(x<100){const z=Math.tanh((v[j%n]-mean)/sd),w=Math.max(5,w0*(1+.5*z)),y=y0+2.6*z;j++;
+      if(!pts.length)pts.push(`0,${y.toFixed(1)}`);
+      pts.push(`${(x+w*.15).toFixed(1)},${(y-peak).toFixed(1)}`,`${(x+w*.3).toFixed(1)},${(y+peak*.4).toFixed(1)}`,`${Math.min(100,x+w).toFixed(1)},${y.toFixed(1)}`);x+=w}
     d+=`<polyline points="${pts.join(" ")}" fill="none" stroke="#121212" stroke-width="1.3" stroke-linejoin="round"/>`}
   return `<svg viewBox="0 0 100 100">${d}</svg>`}
 function blinkPrint(ts,dur){ // จังหวะกระพริบตาตลอดรอบ → ขีดบนเส้นเวลา 5 แถว
