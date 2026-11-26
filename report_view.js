@@ -44,7 +44,7 @@ function printList(m,waiting){
   const P=(m&&m.prints)||{},L=[];
   if(waiting)return [["","ลายสมอง"],["","ลายหัวใจ"],["","ลายกระพริบ"]].map(([_,l])=>[`<div>${l}<br>รอเก็บ</div>`,l]);
   if(P.brain&&P.brain.length>8)L.push([`<div>${brainPrint(P.brain)}</div>`,"สมอง"]);
-  if(P.heart&&P.heart.length>8)L.push([`<div>${heartPrint(P.heart)}</div>`,"หัวใจ"]);
+  if(P.heart&&P.heart.length>8)L.push([`<div>${heartPrint(P.heart)}</div>`,m.heart_src==="signal"?"สัญญาณ":"หัวใจ"]);
   if(P.blink&&P.blink.length)L.push([`<div>${blinkPrint(P.blink,m.duration_s)}</div>`,"กระพริบตา"]);
   return L}
 function prints(m,waiting,withFoot){
@@ -80,7 +80,7 @@ function heartGraph(ibi){ // ชีพจรทีละครั้งตลอ
 function mainGraph(m){
   if(hasCalm(m.calm))return [calmGraph(m.calm),"ความนิ่งของสมองตลอดรอบ (%)"];
   const P=m.prints||{},h=P.heart&&P.heart.length>8?heartGraph(P.heart):"";
-  return h?[h,"จังหวะหัวใจตลอดรอบ (ครั้ง/นาที)"]:["",""]}
+  return h?[h,m.heart_src==="signal"?"สัญญาณที่ได้รับตลอดรอบ (ครั้ง/นาที)":"จังหวะหัวใจตลอดรอบ (ครั้ง/นาที)"]:["",""]}
 function calmGraph(c){
   const n=c.length,segs=[];let cur=[];
   c.forEach((v,k)=>{if(v==null){if(cur.length)segs.push(cur);cur=[]}else cur.push(`${(k/(n-1)*100).toFixed(1)},${(100-v*90-5).toFixed(1)}`)});if(cur.length)segs.push(cur);
@@ -98,16 +98,17 @@ function record(D,o){o=o||{};const S=SETS[D.set]||{name:"—",th:""},m=D.measure
         row=(ok,label,v)=>ok?`<dt>${label}</dt>${mono(v)}`:"";          // ไม่ได้วัด = ไม่แสดงแถวนั้น
   const d=p&&b.stress&&p.stress?b.stress-p.stress:null,mins=m.duration_s?Math.round(m.duration_s/60):0,
         overall=d!=null?(d>0?`คลายลง ${d} ระดับ`:d<0?`ตื่นตัวขึ้น ${-d} ระดับ`:"นิ่งเท่าเดิม"):mins?`พักครบ ${mins} นาที`:"";
-  const vit=[row(m.bpm,"ชีพจรเฉลี่ย / ต่ำสุด / สูงสุด",m.bpm&&`${m.bpm.avg} / ${m.bpm.min} / ${m.bpm.max} bpm`),
+  const sig=m.heart_src==="signal";   // เซนเซอร์หัวใจเตียงนี้ใช้ไม่ได้ → เรียกกว้างๆ ว่าสัญญาณที่ได้รับ (ไม่อ้างว่าเป็นหัวใจ)
+  const vit=[row(m.bpm,sig?"สัญญาณที่ได้รับ เฉลี่ย / ต่ำสุด / สูงสุด":"ชีพจรเฉลี่ย / ต่ำสุด / สูงสุด",m.bpm&&`${m.bpm.avg} / ${m.bpm.min} / ${m.bpm.max} ${sig?"ครั้ง/นาที":"bpm"}`),
         row(m.alpha_hz,"คลื่นอัลฟาประจำตัว",`${m.alpha_hz} Hz`),row(m.synced!=null&&m.synced>0,"นิ่งพร้อมเพื่อนร่วมรอบ",`${m.synced} ครั้ง`),
-        row(m.blinks!=null,"กระพริบตา",`${m.blinks} ครั้ง`),row(m.hrv_rmssd,"HRV (RMSSD)",`${m.hrv_rmssd} ms`)].join("");
+        row(m.blinks!=null,"กระพริบตา",`${m.blinks} ครั้ง`),row(m.hrv_rmssd&&!sig,"HRV (RMSSD)",`${m.hrv_rmssd} ms`)].join("");
   const [graph,gLabel]=mainGraph(m),pr=prints(m,false,true);
   return `<div class="rec">
    <div class="lockup">UNSENSORY RESEARCH LAB</div><div class="num" style="margin-top:4px">SENSORY DE-FREQ · ${esc(D.code)} · ใบตรวจ</div><div class="big" style="margin-top:6px">NEURO-SENSORY<br>RECORD</div>
    <div class="grid"><dl><dt>ชื่อ</dt><dd>${esc(D.nick)}</dd><dt>HN</dt><dd style="font:500 13px var(--m);color:var(--ink);padding-top:5px">${esc(D.hn||"—")}</dd><dt>อายุ</dt><dd>${esc(D.age)}</dd><dt>เซ็ต</dt><dd>${S.name}</dd><dt>อาการที่มา</dt><dd style="font-size:15px">${esc((D.came_for||[]).join(", ")||"กำลังดี")}</dd></dl>
     ${graph}</div>
    ${gLabel?`<div class="kicker" style="margin-top:4px;text-align:right">${gLabel}</div>`:""}
-   ${vit?`<h5>สัญญาณชีพ · วัดจริงระหว่างรอบ</h5><dl style="grid-template-columns:1fr auto">${vit}</dl>`:""}
+   ${vit?`<h5>${sig?"สัญญาณที่วัดได้ระหว่างรอบ":"สัญญาณชีพ · วัดจริงระหว่างรอบ"}</h5><dl style="grid-template-columns:1fr auto">${vit}</dl>`:""}
    ${clipBox(m.clip)}
    ${pr?`<h5>ลายพิมพ์</h5>${pr}`:""}
    <div class="rx"><h6>ใบสั่งยา</h6>
